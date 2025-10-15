@@ -1,0 +1,66 @@
+package com.ktb.ktb_community.global.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+@Configuration
+public class RedisConfig {
+
+    @Value(("${spring.data.redis.host"))
+    private String host;
+
+    @Value(("spring.data.redis.port"))
+    private int port;
+
+    // Connection 생성
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory(host, port);
+    }
+
+    // redis 템플릿 - refresh token
+    @Bean
+    public RedisTemplate<String, String> redisStringTemplate() {
+        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
+
+        // redis 연결
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
+
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+
+        redisTemplate.afterPropertiesSet();
+
+        return redisTemplate;
+    }
+
+    // redis 템플릿
+//    @Bean
+//    public RedisTemplate<String, Object> redisTemplate() {
+//        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+//
+//        // redis 연결
+//        redisTemplate.setConnectionFactory(redisConnectionFactory());
+//
+//        /*
+//        redis는 key-value로 저장
+//        key는 빠르게 읽고 관리해야 함 -> string 직렬화
+//        value는 데이터 구조 보존을 위해 json 직렬화
+//         */
+//        redisTemplate.setKeySerializer(new StringRedisSerializer());
+//        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+//        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+//        redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+//
+//        redisTemplate.afterPropertiesSet();
+//
+//        return redisTemplate;
+//    }
+
+}
