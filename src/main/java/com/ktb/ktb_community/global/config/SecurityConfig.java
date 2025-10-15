@@ -1,5 +1,7 @@
 package com.ktb.ktb_community.global.config;
 
+import com.ktb.ktb_community.global.security.JwtAccessDeniedHandler;
+import com.ktb.ktb_community.global.security.JwtAuthenticationEntryPoint;
 import com.ktb.ktb_community.global.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +25,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     // PasswordEncoder
     @Bean
@@ -56,7 +60,7 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class
                 )
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAutherticationEntryPoint)
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)
                 );
 
