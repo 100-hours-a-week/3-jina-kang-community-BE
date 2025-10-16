@@ -26,4 +26,19 @@ public class PostStatus {
 
     @Column(name = "like_count", nullable = false)
     private Long likeCount = 0L;
+
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decrementLikeCount() {
+        if(this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
 }

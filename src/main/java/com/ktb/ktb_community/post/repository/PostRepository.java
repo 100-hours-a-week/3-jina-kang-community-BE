@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -36,4 +37,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("cursor") Long cursor,
             Pageable pageable
     );
+
+    @Query("SELECT p FROM Post p " +
+            "JOIN FETCH p.user " +
+            "LEFT JOIN FETCH p.postStatus " +
+            "WHERE p.id = :postId AND p.deletedAt IS NULL ")
+    Optional<Post> findByIdWithUserAndPostStatus(@Param("postId") Long postId);
 }

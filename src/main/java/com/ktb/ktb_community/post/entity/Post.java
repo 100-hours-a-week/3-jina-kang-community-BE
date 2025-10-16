@@ -34,6 +34,9 @@ public class Post {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "post",  cascade = CascadeType.ALL)
+    private PostStatus postStatus;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -44,4 +47,23 @@ public class Post {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public void updatePost(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void initPostStatus() {
+        if(this.postStatus == null) {
+            this.postStatus = PostStatus.builder()
+                    .post(this)
+                    .likeCount(0L)
+                    .viewCount(0L)
+                    .build();
+        }
+    }
 }
