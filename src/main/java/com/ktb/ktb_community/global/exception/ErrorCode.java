@@ -15,12 +15,14 @@ public enum ErrorCode {
     // user
 
     // post
-    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다");
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다"),
     // comment
 
     // like
 
     // file
+
+    ;
 
     private final HttpStatus status;
     private final String message;

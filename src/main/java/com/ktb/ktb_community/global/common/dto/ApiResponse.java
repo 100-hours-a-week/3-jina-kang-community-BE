@@ -10,4 +10,12 @@ import lombok.Getter;
 public class ApiResponse<T> {
     private boolean success;
     private T data;
+
+    // 정적 팩토리 메서드
+    public static <T> ApiResponse<T> success(T data) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .data(data)
+                .build();
+    }
 }

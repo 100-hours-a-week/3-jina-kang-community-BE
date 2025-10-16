@@ -40,27 +40,4 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    // redis 템플릿
-//    @Bean
-//    public RedisTemplate<String, Object> redisTemplate() {
-//        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-//
-//        // redis 연결
-//        redisTemplate.setConnectionFactory(redisConnectionFactory());
-//
-//        /*
-//        redis는 key-value로 저장
-//        key는 빠르게 읽고 관리해야 함 -> string 직렬화
-//        value는 데이터 구조 보존을 위해 json 직렬화
-//         */
-//        redisTemplate.setKeySerializer(new StringRedisSerializer());
-//        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-//        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-//        redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-//
-//        redisTemplate.afterPropertiesSet();
-//
-//        return redisTemplate;
-//    }
-
 }
