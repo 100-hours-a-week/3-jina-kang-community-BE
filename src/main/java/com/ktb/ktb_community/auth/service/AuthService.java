@@ -62,11 +62,10 @@ public class AuthService {
     }
 
     // 로그아웃
-    public void logout() {
+    public void logout(Long userId) {
         log.info("logout");
 
-        // accessToken 확인 - 존재, 만료, 서명 유효
-
         // refreshToken 삭제
+        refreshTokenService.deleteRefreshToken(userId);
     }
 }

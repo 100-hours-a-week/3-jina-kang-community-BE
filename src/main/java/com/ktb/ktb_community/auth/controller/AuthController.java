@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +30,7 @@ public class AuthController {
     private Long refreshTokenExpiration;
 
 
+    // 로그인
     @PostMapping
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest,
                                                             HttpServletResponse response
@@ -53,6 +55,30 @@ public class AuthController {
         ApiResponse<LoginResponse> apiResponse = ApiResponse.<LoginResponse>builder()
                 .success(true)
                 .data(loginResponse)
+                .build();
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            HttpServletResponse response,
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("logout - userId: {}", userId);
+
+        authService.logout(userId);
+
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .success(true)
                 .build();
 
         return ResponseEntity.ok(apiResponse);
