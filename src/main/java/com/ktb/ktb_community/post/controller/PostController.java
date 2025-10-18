@@ -33,7 +33,7 @@ public class PostController {
     // Get - post 목록 조회
     @GetMapping
     public ResponseEntity<ApiResponse<CursorResponse<PostListResponse>>> getPostList(
-            @RequestParam Long cursor
+            @RequestParam(required = false) Long cursor
     ) {
         log.info("getPostList");
         /*

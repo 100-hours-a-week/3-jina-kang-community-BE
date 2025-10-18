@@ -36,6 +36,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public CursorResponse<PostListResponse> getPostList(Long cursor, String deviceType) {
+        if(cursor != null && cursor <= 0) cursor = null;
         log.info("getPostList - cursor: {}", cursor);
 
         int limit = getPageLimit(deviceType);
@@ -50,6 +51,7 @@ public class PostService {
 
         Long nextCursor = hasNext ? posts.get(posts.size()-1).postId() : null;
 
+        log.info("getPostList - posts: {}", posts.size());
         return new CursorResponse<>(posts, nextCursor, hasNext);
     }
 
