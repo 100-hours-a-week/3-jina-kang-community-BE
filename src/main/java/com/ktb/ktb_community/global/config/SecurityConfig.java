@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 - 로그인, 회원가입
-                        .requestMatchers("/api/auth", "/api/user").permitAll()
+                        .requestMatchers("/api/auth", "/api/users").permitAll()
                         // 권한이 있어야 접근
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 나머지는 인증 필요
@@ -71,7 +71,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://localhost:5501",
+                "http://127.0.0.1:5501"
+        ));  // 개발 후 수정 필요
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

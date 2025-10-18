@@ -21,7 +21,6 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private FilterChain filterChain;
 
     @Override
     protected void doFilterInternal(
@@ -55,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 다음 필터로
-        filterChain.doFilter(request, response);
+        chain.doFilter(request, response);
     }
 
     // 헤더에서 토큰 추출
