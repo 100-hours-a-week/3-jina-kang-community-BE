@@ -13,6 +13,9 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다"),
     // user
+    PROFILE_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "프로필 이미지를 찾을 수 없습니다"),
+    EXISTED_EMAIL(HttpStatus.CONFLICT, "이미 사용중인 이메일입니다"),
+    EXISTED_NICKNAME(HttpStatus.CONFLICT, "이미 사용중인 닉네임입니다"),
 
     // post
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다"),
