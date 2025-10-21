@@ -1,6 +1,6 @@
 package com.ktb.ktb_community.comment.repository;
 
-import com.ktb.ktb_community.comment.dto.response.CommentListResponse;
+import com.ktb.ktb_community.comment.dto.response.CommentResponse;
 import com.ktb.ktb_community.comment.entity.Comment;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +14,7 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("""
-        SELECT new com.ktb.ktb_community.comment.dto.response.CommentListResponse(
+        SELECT new com.ktb.ktb_community.comment.dto.response.CommentResponse(
             c.id,
             u.nickname,
             c.content,
@@ -28,7 +28,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         AND (:cursor IS NULL OR c.id < :cursor)
         ORDER BY c.id DESC
         """)
-    List<CommentListResponse> findCommentListWithCursorAndPostId(
+    List<CommentResponse> findCommentListWithCursorAndPostId(
             @Param("curor") Long cursor,
             Pageable pageable,
             @Param("postId") Long postId,
