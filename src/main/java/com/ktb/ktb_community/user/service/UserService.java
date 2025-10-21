@@ -22,7 +22,7 @@ public class UserService {
     private final UserMapper userMapper;
 
     public void signup(SignupRequest signupRequest) {
-        log.info("signup email: {}", signupRequest.email());
+        log.info("signup signupRequest: {}", signupRequest);
 
         // 이메일 중복체크
         if(userRepository.existsByEmail(signupRequest.email())) {
