@@ -2,9 +2,12 @@ package com.ktb.ktb_community.post.mapper;
 
 import com.ktb.ktb_community.post.dto.request.PostCreateRequest;
 import com.ktb.ktb_community.post.dto.response.PostDetailResponse;
+import com.ktb.ktb_community.post.dto.response.PostFileResponse;
 import com.ktb.ktb_community.post.entity.Post;
 import com.ktb.ktb_community.user.entity.User;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class PostMapper {
@@ -24,7 +27,7 @@ public class PostMapper {
 
 
     // Entity -> DTO
-    public PostDetailResponse toPostDetailResponse(Post post, Long userId) {
+    public PostDetailResponse toPostDetailResponse(Post post, List<PostFileResponse> postfiles, Long userId) {
 
         Long viewCount = (post.getPostStatus() != null) ? post.getPostStatus().getViewCount() : 0L;
         Long likeCount = (post.getPostStatus() != null) ? post.getPostStatus().getLikeCount() : 0L;
@@ -38,6 +41,7 @@ public class PostMapper {
                 likeCount,
                 viewCount,
                 post.getCreatedAt(),
+                postfiles,
                 isAuthor
         );
     }

@@ -4,12 +4,17 @@ import com.ktb.ktb_community.global.common.dto.CursorResponse;
 import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
 import com.ktb.ktb_community.post.dto.request.PostCreateRequest;
+import com.ktb.ktb_community.post.dto.request.PostFileRequest;
 import com.ktb.ktb_community.post.dto.request.PostUpdateRequest;
 import com.ktb.ktb_community.post.dto.response.PostDetailResponse;
+import com.ktb.ktb_community.post.dto.response.PostFileResponse;
 import com.ktb.ktb_community.post.dto.response.PostListResponse;
 import com.ktb.ktb_community.post.entity.Post;
+import com.ktb.ktb_community.post.entity.PostFile;
 import com.ktb.ktb_community.post.entity.PostStatus;
+import com.ktb.ktb_community.post.mapper.PostFileMapper;
 import com.ktb.ktb_community.post.mapper.PostMapper;
+import com.ktb.ktb_community.post.repository.PostFileRepository;
 import com.ktb.ktb_community.post.repository.PostRepository;
 import com.ktb.ktb_community.post.repository.PostStatusRepository;
 import com.ktb.ktb_community.user.entity.User;
@@ -24,6 +29,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -34,7 +40,9 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostStatusRepository postStatusRepository;
+    private final PostFileRepository postFileRepository;
     private final PostMapper postMapper;
+    private final PostFileMapper postFileMapper;
 
     // post 목록 조회
     @Transactional(readOnly = true)
@@ -71,7 +79,12 @@ public class PostService {
         if(postStatus != null) {
             postStatus.incrementViewCount();
         }
-        PostDetailResponse response = postMapper.toPostDetailResponse(post, userId);
+        // postFile 조회
+        List<PostFile> postFiles = postFileRepository.findByPostIdOrderByImageIndexAsc(postId);
+        // postFile Entity -> dto
+        List<PostFileResponse> fileResponses = postFileMapper.toPostFileResponseList(postFiles);
+        // 응답 dto
+        PostDetailResponse response = postMapper.toPostDetailResponse(post, fileResponses, userId);
 
         return response;
     }
@@ -88,15 +101,28 @@ public class PostService {
         Post post = postMapper.toEntity(request,  user);
         // 게시물 저장
         Post savedPost = postRepository.save(post);
-        // TODO 사진 저장
-
+        // 사진 저장
+        // 첨부된 파일이 너무 많으면 예외처리 (최대 5장)
+        if(request.postImages().size() > 5) {
+            throw new CustomException(ErrorCode.TOO_MANY_FILES);
+        }
+        List<PostFileResponse> savedPostFileList = new ArrayList<>();
+        if (request.postImages() != null && !request.postImages().isEmpty()) {
+            for (PostFileRequest file : request.postImages()) {
+                PostFile postFile = postFileMapper.toEntity(file, post);
+                PostFile savedPostFile = postFileRepository.save(postFile);
+                PostFileResponse fileResponse = postFileMapper.toPostFileResponse(savedPostFile);
+                savedPostFileList.add(fileResponse);
+            }
+        }
         // 저장된 게시물 반환
         // Entity -> DTO
-        PostDetailResponse response = postMapper.toPostDetailResponse(savedPost, userId);
+        PostDetailResponse response = postMapper.toPostDetailResponse(savedPost, savedPostFileList, userId);
 
         return response;
     }
 
+    // post 수정
     @Transactional
     public PostDetailResponse updatePost(Long postId, PostUpdateRequest request, Long userId) {
         log.info("updatePost - {}", postId);
@@ -110,10 +136,21 @@ public class PostService {
         }
         // 게시글 업데이트
         post.updatePost(request.title(), request.content());
-        // TODO 업데이트된 파일 리스트와 기존 파일 비교 - 변경된 파일 수정
-
+        // 업데이트된 파일 리스트와 기존 파일 비교 - 변경된 파일 수정
+        // 첨부된 파일이 너무 많으면 예외처리 (최대 5장)
+        if(request.postImages().size() > 5) {
+            throw new CustomException(ErrorCode.TOO_MANY_FILES);
+        }
+        if(request.postImages() != null && !request.postImages().isEmpty()) {
+            updatePostFiles(post, request.postImages());
+        }
+        // 업데이트한 postFileList 조회
+        List<PostFile> savedPostFileList = postFileRepository
+                .findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(postId);
+        List<PostFileResponse> savedPostFileResponseList = postFileMapper
+                .toPostFileResponseList(savedPostFileList);
         // 업데이트한 게시글 상세조회 데이터 조회
-        PostDetailResponse response = postMapper.toPostDetailResponse(post, userId);
+        PostDetailResponse response = postMapper.toPostDetailResponse(post, savedPostFileResponseList, userId);
 
         return response;
     }
@@ -149,5 +186,35 @@ public class PostService {
         }
 
         return limit;
+    }
+
+    private void updatePostFiles(Post post, List<PostFileRequest> postFiles) {
+        // 기존 파일 조회 - 삭제되지 않은 것만
+        List<PostFile> existingFiles = postFileRepository
+                .findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(post.getId());
+        // 기존 파일들 중 새로 요청한 파일 목록에 없는 경우 -> 삭제 처리
+        for(PostFile existingFile : existingFiles) {
+            boolean isExist = postFiles.stream()
+                    .anyMatch(request -> request.fileUrl().equals(existingFile.getUrl()));
+            if(!isExist) {
+                existingFile.changeToDeleted();
+            }
+        }
+        // 요청 파일 처리
+        for(int i = 0; i < postFiles.size(); i++) {
+            PostFileRequest file = postFiles.get(i);
+
+            PostFile existingFile = existingFiles.stream()
+                    .filter(f -> f.getUrl().equals(file.fileUrl()))
+                    .findFirst().orElse(null);
+            // 첨부 순서 바뀐 파일은 순서 인덱스 변경
+            if(existingFile != null) {
+                existingFile.updateIndex(i+1);
+            }
+            else {
+                PostFile newFile = postFileMapper.toEntity(file, post);
+                postFileRepository.save(newFile);
+            }
+        }
     }
 }

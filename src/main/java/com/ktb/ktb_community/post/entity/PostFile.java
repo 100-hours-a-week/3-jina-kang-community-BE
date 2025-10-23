@@ -27,11 +27,14 @@ public class PostFile {
     @JoinColumn(name = "post_id",  nullable = false)
     private Post post;
 
+    @Column(name = "file_name", nullable = false)
+    private String fileName;
+
     @Column(nullable = false)
     private String url;
 
     @Column(name = "image_index", nullable = false)
-    private int ImageIndex = 1;
+    private int imageIndex = 1;
 
     @Column(nullable = false)
     private FileType type;
@@ -39,4 +42,15 @@ public class PostFile {
     @CreatedDate
     @Column(name = "created_at", nullable = false,  updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    public void changeToDeleted() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void updateIndex(int index){
+        this.imageIndex = index;
+    }
 }

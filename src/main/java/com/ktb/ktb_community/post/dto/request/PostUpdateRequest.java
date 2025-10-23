@@ -13,5 +13,5 @@ public record PostUpdateRequest (
 
     String content,
 
-    List<FileInfo> postImages
+    List<PostFileRequest> postImages
 ){}
