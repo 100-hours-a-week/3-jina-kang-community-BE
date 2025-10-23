@@ -1,6 +1,7 @@
 package com.ktb.ktb_community.user.mapper;
 
 import com.ktb.ktb_community.user.dto.request.SignupRequest;
+import com.ktb.ktb_community.user.dto.response.ProfileEditResponse;
 import com.ktb.ktb_community.user.dto.response.UserInfo;
 import com.ktb.ktb_community.user.entity.ProfileImage;
 import com.ktb.ktb_community.user.entity.User;
@@ -33,7 +34,12 @@ public class UserMapper {
         return new UserInfo(
                 user.getId(),
                 user.getRole(),
-                user.getProfileImage().getUrl()
+                user.getProfileImage().getUrl(),
+                user.getEmail()
         );
+    }
+
+    public ProfileEditResponse toProfileEditResponse(User user) {
+        return new ProfileEditResponse(user.getProfileImage().getUrl());
     }
 }
