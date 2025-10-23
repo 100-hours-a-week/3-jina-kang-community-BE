@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 - 로그인, 회원가입
-                        .requestMatchers("/api/auth", "/api/users").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/users").permitAll()
                         // 권한이 있어야 접근
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // 나머지는 인증 필요
