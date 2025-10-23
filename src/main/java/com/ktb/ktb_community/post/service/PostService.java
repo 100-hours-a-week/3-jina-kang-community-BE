@@ -55,7 +55,7 @@ public class PostService {
         Long nextCursor = hasNext ? posts.get(posts.size()-1).postId() : null;
 
         log.info("getPostList - posts: {}", posts.size());
-        return new CursorResponse<>(posts, nextCursor, hasNext);
+        return new CursorResponse<PostListResponse>(posts, nextCursor, hasNext, null);
     }
 
     // post 상세 조회

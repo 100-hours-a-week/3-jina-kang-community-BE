@@ -35,8 +35,8 @@ public class PostMapper {
                 post.getTitle(),
                 post.getUser().getNickname(),
                 post.getContent(),
-                viewCount,
                 likeCount,
+                viewCount,
                 post.getCreatedAt(),
                 isAuthor
         );
