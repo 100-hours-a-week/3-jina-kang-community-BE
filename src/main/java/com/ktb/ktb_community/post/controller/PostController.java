@@ -95,7 +95,7 @@ public class PostController {
 
     // Delete - post 삭제
     @DeleteMapping("/{postId}")
-    public ResponseEntity<Void> deletePost(
+    public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal Long userId
     ) {
@@ -103,6 +103,8 @@ public class PostController {
 
         postService.deletePost(postId, userId);
 
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> apiResponse = ApiResponse.success(null);
+
+        return ResponseEntity.ok(apiResponse);
     }
 }

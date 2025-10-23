@@ -57,7 +57,7 @@ public class CommentController {
 
     // 댓글 수정
     @PatchMapping("/{commentId}")
-    public ResponseEntity<CommentResponse> updateComment(
+    public ResponseEntity<ApiResponse<CommentResponse>> updateComment(
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody CommentUpdateRequest request,
@@ -69,12 +69,12 @@ public class CommentController {
 
         ApiResponse<CommentResponse> apiResponse = ApiResponse.success(response);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(apiResponse);
     }
 
     // 댓글 삭제
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> deleteComment(
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long commentId,
             @PathVariable Long postId,
             @AuthenticationPrincipal Long userId
@@ -83,6 +83,8 @@ public class CommentController {
 
         commentService.deleteComment(commentId, userId);
 
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> apiResponse = ApiResponse.success(null);
+
+        return ResponseEntity.ok(apiResponse);
     }
 }
