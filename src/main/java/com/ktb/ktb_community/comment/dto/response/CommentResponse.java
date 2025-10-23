@@ -7,5 +7,5 @@ public record CommentResponse(
     String authorName,
     String content,
     LocalDateTime createdAt,
-    boolean isAuthor
+    Boolean isAuthor
 ) {}

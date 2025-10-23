@@ -29,9 +29,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         ORDER BY c.id DESC
         """)
     List<CommentResponse> findCommentListWithCursorAndPostId(
-            @Param("curor") Long cursor,
+            @Param("cursor") Long cursor,
             Pageable pageable,
             @Param("postId") Long postId,
             @Param("userId") Long userId
     );
+
+    @Query("SELECT COUNT(c) FROM Comment c " +
+            "WHERE c.post.id = :postId AND c.deletedAt IS NULL")
+    Long countByPostIdAndDeletedAtIsNull(@Param("postId") Long postId);
 }

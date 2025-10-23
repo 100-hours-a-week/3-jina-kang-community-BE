@@ -36,9 +36,9 @@ public class CommentService {
     // comment 목록 조회
     @Transactional(readOnly = true)
     public CursorResponse<CommentResponse> getCommentList(Long cursor,
-                                                          String deviceType,
-                                                          Long postId,
-                                                          Long userId
+                                                           String deviceType,
+                                                           Long postId,
+                                                           Long userId
     ) {
         log.info("getCommentList - postId={}, cursor={}", postId, cursor);
 
@@ -46,6 +46,7 @@ public class CommentService {
 
         Pageable pageable = PageRequest.of(0, limit+1, Sort.by("id").descending());
         List<CommentResponse> comments = commentRepository.findCommentListWithCursorAndPostId(cursor, pageable, postId, userId);
+        Long commentCount = commentRepository.countByPostIdAndDeletedAtIsNull(postId);
 
         boolean hasNext = comments.size() > limit;
         if(hasNext) {
@@ -55,7 +56,7 @@ public class CommentService {
         Long nextCursor = hasNext ? comments.get(comments.size()-1).commentId() : null;
 
         log.info("getCommentList - comments={}", comments.size());
-        return new CursorResponse<>(comments, nextCursor, hasNext);
+        return new CursorResponse<CommentResponse>(comments, nextCursor, hasNext, commentCount);
     }
 
     // comment 생성
@@ -88,7 +89,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
         // 본인 댓글인지 확인
-        if(comment.getUser().getId().equals(userId)) {
+        if(!comment.getUser().getId().equals(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         // 댓글 업데이트
@@ -107,7 +108,8 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
         // 본인 댓글인지 확인
-        if(comment.getUser().getId().equals(userId)) {
+        log.info(comment.getUser().getId() + " " + userId);
+        if(!comment.getUser().getId().equals(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         // soft delete
