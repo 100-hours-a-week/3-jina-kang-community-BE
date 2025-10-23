@@ -29,7 +29,7 @@ public class RefreshTokenService {
                 key,
                 refreshToken,
                 refreshTokenExpiration,
-                TimeUnit.MICROSECONDS
+                TimeUnit.MILLISECONDS
                 );
     }
 
@@ -38,7 +38,7 @@ public class RefreshTokenService {
         log.info("refresh token 조회 - userId: {}", userId);
 
         String key = createKey(userId);
-        String token = redisTemplate.opsForValue().get(key).toString();
+        String token = redisTemplate.opsForValue().get(key);
 
         return token;
     }
