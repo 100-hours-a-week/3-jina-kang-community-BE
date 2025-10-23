@@ -2,6 +2,7 @@ package com.ktb.ktb_community.auth.service;
 
 import com.ktb.ktb_community.auth.dto.request.LoginRequest;
 import com.ktb.ktb_community.auth.dto.response.LoginResult;
+import com.ktb.ktb_community.auth.dto.response.TokenResponse;
 import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
 import com.ktb.ktb_community.global.security.JwtProvider;
@@ -66,5 +67,35 @@ public class AuthService {
 
         // refreshToken 삭제
         refreshTokenService.deleteRefreshToken(userId);
+    }
+
+    // access token 재발급
+    public TokenResponse reissueAccessToken(String refreshToken) {
+        log.info("reissueAccessToken - refreshToken: {}", refreshToken);
+
+        // refresh token 유효성 검증
+        if(!jwtProvider.validateToken(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        // refresh token이 맞는지 확인
+        if(!jwtProvider.isRefreshToken(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        Long userId = jwtProvider.getUserIdFromToken(refreshToken);
+        // redis에서 refresh token 조회
+        if(!refreshTokenService.validateRefreshToken(userId, refreshToken)) {
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_MISMATCH);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+
+        String newToken = jwtProvider.createAccessToken(
+                user.getId(),
+                user.getRole()
+        );
+
+        return  new TokenResponse(newToken);
     }
 }

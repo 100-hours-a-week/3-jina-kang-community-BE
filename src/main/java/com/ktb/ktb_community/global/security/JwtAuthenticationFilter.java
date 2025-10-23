@@ -1,5 +1,12 @@
 package com.ktb.ktb_community.global.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ktb.ktb_community.global.common.dto.ErrorResponse;
+import com.ktb.ktb_community.global.exception.CustomException;
+import com.ktb.ktb_community.global.exception.ErrorCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +28,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -28,33 +36,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain chain
     ) throws ServletException, IOException {
-        // 헤더에서 토큰 추출
-        String token = extractToken(request);
+        try {
+            // 헤더에서 토큰 추출
+            String token = extractToken(request);
 
-        // 토큰 검증 후 SecurityContext에 저장
-        if(token != null && jwtProvider.validateToken(token)) {
-            // 사용자 정보 추출
-            Long  userId = jwtProvider.getUserIdFromToken(token);
-            String userRole = jwtProvider.getUserRoleFromToken(token).toString();
+            // 토큰 검증 후 SecurityContext에 저장
+            if(token == null) {
+                chain.doFilter(request, response);
+                return;
+            }
 
-            //
-            List<GrantedAuthority> authorities = List.of(
-                    new SimpleGrantedAuthority(userRole)
-            );
+            if(jwtProvider.validateToken(token)) {
+                // 사용자 정보 추출
+                Long  userId = jwtProvider.getUserIdFromToken(token);
+                String userRole = jwtProvider.getUserRoleFromToken(token).toString();
 
-            // Authentication 객체 생성 -> 사용자 정보 저장
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    userId,         // 사용자 정보
-                    null,           // credential
-                    authorities     // 인가 정보
-            );
+                //
+                List<GrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority(userRole)
+                );
 
-            // SecurityContextHolder에 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Authentication 객체 생성 -> 사용자 정보 저장
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        userId,         // 사용자 정보
+                        null,           // credential
+                        authorities     // 인가 정보
+                );
+
+                // SecurityContextHolder에 저장
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
+            chain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            // Access Token 만료
+            sendErrorResponse(response, ErrorCode.TOKEN_EXPIRED);
+
+        } catch (MalformedJwtException | SignatureException e) {
+            // 잘못된 토큰
+            sendErrorResponse(response, ErrorCode.INVALID_TOKEN);
+
+        } catch (Exception e) {
+            // 기타 에러
+            sendErrorResponse(response, ErrorCode.UNAUTHORIZED);
         }
-
-        // 다음 필터로
-        chain.doFilter(request, response);
     }
 
     // 헤더에서 토큰 추출
@@ -66,5 +91,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         return null;
+    }
+
+    private void sendErrorResponse(
+            HttpServletResponse response,
+            ErrorCode errorCode
+    ) throws IOException {
+        response.setStatus(errorCode.getStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+
+        ErrorResponse errorResponse = ErrorResponse.of(errorCode);
+
+        String jsonResponse = objectMapper.writeValueAsString(errorResponse);
+        response.getWriter().write(jsonResponse);
     }
 }

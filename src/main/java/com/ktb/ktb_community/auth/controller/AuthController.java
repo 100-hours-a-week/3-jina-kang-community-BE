@@ -3,6 +3,7 @@ package com.ktb.ktb_community.auth.controller;
 import com.ktb.ktb_community.auth.dto.request.LoginRequest;
 import com.ktb.ktb_community.auth.dto.response.LoginResponse;
 import com.ktb.ktb_community.auth.dto.response.LoginResult;
+import com.ktb.ktb_community.auth.dto.response.TokenResponse;
 import com.ktb.ktb_community.auth.service.AuthService;
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
 import jakarta.servlet.http.Cookie;
@@ -13,10 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -31,7 +29,7 @@ public class AuthController {
 
 
     // 로그인
-    @PostMapping
+    @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest,
                                                             HttpServletResponse response
     ) {
@@ -83,4 +81,19 @@ public class AuthController {
 
         return ResponseEntity.ok(apiResponse);
     }
+
+    // access token 재발급
+    @PostMapping("/reissue/access")
+    public ResponseEntity<ApiResponse<TokenResponse>> reissueAccessToken(
+            @CookieValue(name = "refreshToken") String refreshToken
+    ) {
+        log.info("reissueAccessToken - refreshToken: {}", refreshToken);
+
+        TokenResponse tokenResponse = authService.reissueAccessToken(refreshToken);
+        ApiResponse<TokenResponse> apiResponse = ApiResponse.success(tokenResponse);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
+
 }
