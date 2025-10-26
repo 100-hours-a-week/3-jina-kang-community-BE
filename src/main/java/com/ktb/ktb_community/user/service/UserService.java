@@ -7,9 +7,10 @@ import com.ktb.ktb_community.user.dto.request.PasswordEditRequest;
 import com.ktb.ktb_community.user.dto.request.ProfileEditRequest;
 import com.ktb.ktb_community.user.dto.request.SignupRequest;
 import com.ktb.ktb_community.user.dto.response.DuplicationResponse;
-import com.ktb.ktb_community.user.dto.response.ProfileEditResponse;
+import com.ktb.ktb_community.user.dto.response.ProfileResponse;
 import com.ktb.ktb_community.user.entity.ProfileImage;
 import com.ktb.ktb_community.user.entity.User;
+import com.ktb.ktb_community.user.mapper.ProfileImageMapper;
 import com.ktb.ktb_community.user.mapper.UserMapper;
 import com.ktb.ktb_community.user.repository.ProfileImageRepository;
 import com.ktb.ktb_community.user.repository.UserRepository;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -26,6 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ProfileImageRepository profileImageRepository;
     private final UserMapper userMapper;
+    private final ProfileImageMapper profileImageMapper;
     private final PasswordEncoder passwordEncoder;
 
     // 회원가입
@@ -52,50 +55,57 @@ public class UserService {
     }
 
     // 닉네임 중복확인
-    public DuplicationResponse nicknameDuplication(ProfileEditRequest profileEditRequest) {
-        DuplicationResponse response;
-        if(userRepository.existsByNickname(profileEditRequest.nickname())) {
-            response = new DuplicationResponse(true);
-        }
-        else {
-            response = new DuplicationResponse(false);
-        }
-
-        return response;
+    @Transactional(readOnly = true)
+    public boolean isNicknameDuplicated(String nickname) {
+        return userRepository.existsByNickname(nickname);
     }
+
     // 이메일 중복확인
-    public DuplicationResponse emailDuplication(EmailDuplicationRequest emailDuplicationRequest) {
-        DuplicationResponse response;
-        if(userRepository.existsByEmail(emailDuplicationRequest.email())) {
-            response = new DuplicationResponse(true);
-        }
-        else {
-            response = new DuplicationResponse(false);
-        }
-
-        return response;
+    @Transactional(readOnly = true)
+    public boolean isEmailDuplicated(String email) {
+        return userRepository.existsByEmail(email);
     }
 
-    // 회원 정보 수정 - 닉네임, 프로필 사진
-    public ProfileEditResponse editProfile(ProfileEditRequest profileEditRequest, Long userId) {
-        log.info("editProfile profileEditRequest: {}", profileEditRequest);
+    // 회원 정보 조회
+    @Transactional(readOnly = true)
+    public ProfileResponse getProfile(Long userId) {
+        log.info("getProfile userId: {}", userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
-        if(user.getNickname().equals(profileEditRequest.nickname())) {
-            throw new CustomException(ErrorCode.BEFORE_NICKNAME);
-        }
 
-        if(userRepository.existsByNickname(profileEditRequest.nickname())) {
+        return userMapper.toProfileResponse(user);
+    }
+
+    // 회원 정보 수정 - 닉네임, 프로필 사진
+    @Transactional
+    public ProfileResponse editProfile(ProfileEditRequest request, Long userId) {
+        log.info("editProfile profileEditRequest: {}", request);
+        //사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+        // 닉네임
+        String newNickname = request.nickname();
+        if (userRepository.existsByNicknameAndIdNot(newNickname, userId)) {
             throw new CustomException(ErrorCode.EXISTED_NICKNAME);
         }
+        // 프로필 이미지
+        ProfileImage newProfileImage = user.getProfileImage();
+        if (request.profileImage() != null) {
+            // 기존 프로필 이미지 논리 삭제
+            ProfileImage oldProfileImage = user.getProfileImage();
+            if (oldProfileImage != null && oldProfileImage.getDeletedAt() == null) {
+                oldProfileImage.markAsDeleted();
+            }
 
-        ProfileImage profileImage = profileImageRepository.findById(profileEditRequest.profileImageId())
-                .orElseThrow(() -> new CustomException(ErrorCode.PROFILE_IMAGE_NOT_FOUND));
+            // 새 프로필 이미지 생성 및 저장
+            newProfileImage = profileImageMapper.toEntity(request.profileImage());
+            newProfileImage = profileImageRepository.save(newProfileImage);
+        }
 
-        user.updateProfile(profileEditRequest.nickname(), profileImage);
+        user.updateProfile(request.nickname(), newProfileImage);
 
-        return userMapper.toProfileEditResponse(user);
+        return userMapper.toProfileResponse(user);
     }
 
     // 비밀번호 수정

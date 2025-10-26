@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
@@ -25,6 +26,9 @@ public class JwtProvider {
 
     @Value("${jwt.refresh-token-expiration}")
     private Long refreshTokenExpiration;
+
+    @Value("${jwt.file-token-expiration}")
+    private Long fileTokenExpiration;
 
     private Key secretKey;
 
@@ -44,9 +48,9 @@ public class JwtProvider {
                 .claim("id", userId)
                 .claim("role", role.name())
                 .claim("tokenType", "ACCESS")
-                .setIssuedAt(now)
-                .setExpiration(expiration)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(secretKey)
                 .compact();
 
         return accessToken;
@@ -60,9 +64,9 @@ public class JwtProvider {
         String refreshToken = Jwts.builder()
                 .claim("id", userId)
                 .claim("tokenType", "REFRESH")
-                .setIssuedAt(now)
-                .setExpiration(expiration)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(secretKey)
                 .compact();
 
         return refreshToken;
@@ -72,9 +76,9 @@ public class JwtProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith((SecretKey) secretKey)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
             log.warn("만료된 토큰: {}", token);
@@ -87,10 +91,10 @@ public class JwtProvider {
     // token에서 claims 추출
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(secretKey)
+                .verifyWith((SecretKey) secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     // user id 추출 -> Authentication
@@ -130,6 +134,36 @@ public class JwtProvider {
         }  catch (Exception e) {
             return false;
         }
+    }
+
+    // 파일 토큰 생성
+    public String createFileToken(String fileName) {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + accessTokenExpiration);
+
+        return Jwts.builder()
+                .claim("fileName", fileName)
+                .claim("tokenType", "FILE")
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(secretKey)
+                .compact();
+    }
+
+    // 파일 토큰인지 확인
+    public boolean isFileToken(String token) {
+        try {
+            String tokenType = getTokenTypeFromToken(token);
+            return tokenType.equalsIgnoreCase("FILE");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // 토큰에서 파일명 추출
+    public String getFileNameFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("fileName", String.class);
     }
 
 }

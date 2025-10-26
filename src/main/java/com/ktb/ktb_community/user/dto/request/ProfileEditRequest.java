@@ -8,5 +8,5 @@ public record ProfileEditRequest (
         @Size(max = 100, message = "닉네임은 최대 100자입니다")
         String nickname,
 
-        Long profileImageId
+        ProfileImageRequest profileImage
 ){}

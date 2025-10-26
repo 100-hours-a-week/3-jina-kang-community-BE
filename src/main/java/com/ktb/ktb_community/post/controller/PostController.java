@@ -2,6 +2,7 @@ package com.ktb.ktb_community.post.controller;
 
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
 import com.ktb.ktb_community.global.common.dto.CursorResponse;
+import com.ktb.ktb_community.global.file.service.FileService;
 import com.ktb.ktb_community.post.dto.request.PostCreateRequest;
 import com.ktb.ktb_community.post.dto.request.PostUpdateRequest;
 import com.ktb.ktb_community.post.dto.response.PostDetailResponse;
@@ -9,6 +10,7 @@ import com.ktb.ktb_community.post.dto.response.PostListResponse;
 import com.ktb.ktb_community.post.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +25,10 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final FileService fileService;
+
+    @Value("${file.upload.path}")
+    private String uploadPath;
 
     /*
     Todo
@@ -69,13 +75,15 @@ public class PostController {
             @RequestBody PostCreateRequest request,
             @AuthenticationPrincipal Long userId
     ) {
-        log.info("Post 작성 - userId: {}", userId);
-
+       log.info("Post 작성 - userId: {}", userId);
         PostDetailResponse response = postService.createPost(request, userId);
 
         ApiResponse<PostDetailResponse> apiResponse = ApiResponse.success(response);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+        ResponseEntity<ApiResponse<PostDetailResponse>> responseEntity =
+                ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+
+        return responseEntity;
     }
 
     // Patch - post 수정

@@ -4,16 +4,13 @@ import com.ktb.ktb_community.global.common.dto.ApiResponse;
 import com.ktb.ktb_community.user.dto.request.PasswordEditRequest;
 import com.ktb.ktb_community.user.dto.request.ProfileEditRequest;
 import com.ktb.ktb_community.user.dto.request.SignupRequest;
-import com.ktb.ktb_community.user.dto.response.ProfileEditResponse;
+import com.ktb.ktb_community.user.dto.response.ProfileResponse;
 import com.ktb.ktb_community.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -39,23 +36,36 @@ public class UserController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    // 회원 정보 조회
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("회원 정보 조회");
+
+        ProfileResponse response = userService.getProfile(userId);
+        ApiResponse<ProfileResponse> apiResponse = ApiResponse.success(response);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
     // 회원정보 수정
-    @PostMapping("/me")
-    public ResponseEntity<ApiResponse<ProfileEditResponse>> editProfile(
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse<ProfileResponse>> editProfile(
             @RequestBody ProfileEditRequest request,
             @AuthenticationPrincipal Long userId
     ) {
         log.info("회원정보 변경");
 
-        ProfileEditResponse response = userService.editProfile(request, userId);
+        ProfileResponse response = userService.editProfile(request, userId);
 
-        ApiResponse<ProfileEditResponse> apiResponse = ApiResponse.success(response);
+        ApiResponse<ProfileResponse> apiResponse = ApiResponse.success(response);
 
         return ResponseEntity.ok(apiResponse);
     }
 
     // 비밀번호 수정
-    @PostMapping("/me/password")
+    @PatchMapping("/me/password")
     public ResponseEntity<ApiResponse<Void>> editPassword(
             @RequestBody PasswordEditRequest request,
             @AuthenticationPrincipal Long userId

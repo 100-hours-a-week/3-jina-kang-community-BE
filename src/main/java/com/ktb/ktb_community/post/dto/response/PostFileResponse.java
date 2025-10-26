@@ -4,5 +4,6 @@ public record PostFileResponse (
         Long postFileId,
         String fileName,
         String url,
-        int imageIndex
+        int imageIndex,
+        String contentType
 ) {}

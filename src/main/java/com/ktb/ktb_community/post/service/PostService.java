@@ -28,9 +28,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -80,7 +84,7 @@ public class PostService {
             postStatus.incrementViewCount();
         }
         // postFile 조회
-        List<PostFile> postFiles = postFileRepository.findByPostIdOrderByImageIndexAsc(postId);
+        List<PostFile> postFiles = postFileRepository.findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(postId);
         // postFile Entity -> dto
         List<PostFileResponse> fileResponses = postFileMapper.toPostFileResponseList(postFiles);
         // 응답 dto
@@ -189,32 +193,80 @@ public class PostService {
     }
 
     private void updatePostFiles(Post post, List<PostFileRequest> postFiles) {
-        // 기존 파일 조회 - 삭제되지 않은 것만
         List<PostFile> existingFiles = postFileRepository
                 .findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(post.getId());
-        // 기존 파일들 중 새로 요청한 파일 목록에 없는 경우 -> 삭제 처리
+
+        Map<String, PostFile> fileMap = existingFiles.stream()
+                .collect(Collectors.toMap(PostFile::getUrl, f -> f));
+
+        log.info("=== 파일 업데이트 시작 ===");
+        log.info("기존 파일 개수: {}", existingFiles.size());
+        log.info("요청 파일 개수: {}", postFiles.size());
+
+        log.info("파일 맵 생성:");
+        fileMap.forEach((key, value) -> log.info("  - {}: ID={}", key, value.getId()));
+
+        // 삭제 체크
+        Set<String> requestedUrls = postFiles.stream()
+                .map(f -> extractFileUrl(f.fileUrl()))
+                .collect(Collectors.toSet());
+
         for(PostFile existingFile : existingFiles) {
-            boolean isExist = postFiles.stream()
-                    .anyMatch(request -> request.fileUrl().equals(existingFile.getUrl()));
-            if(!isExist) {
+            if(!requestedUrls.contains(existingFile.getUrl())) {
+                log.info("삭제할 파일: {}", existingFile.getUrl());
                 existingFile.changeToDeleted();
+                fileMap.remove(existingFile.getUrl());  // Map에서도 제거
             }
         }
-        // 요청 파일 처리
+
+        log.info("삭제 처리 후 파일 맵:");
+        fileMap.forEach((key, value) -> log.info("  - {}: ID={}", key, value.getId()));
+
+        // 파일 처리
         for(int i = 0; i < postFiles.size(); i++) {
             PostFileRequest file = postFiles.get(i);
 
-            PostFile existingFile = existingFiles.stream()
-                    .filter(f -> f.getUrl().equals(file.fileUrl()))
-                    .findFirst().orElse(null);
-            // 첨부 순서 바뀐 파일은 순서 인덱스 변경
+            String originalUrl = extractFileUrl(file.fileUrl());
+            log.info("처리 중 - 파일 {}: {}", i+1, originalUrl);
+
+            PostFile existingFile = fileMap.get(originalUrl);  // ← Map에서 직접 조회
+
+            log.info("Map에서 찾은 파일: {}", existingFile != null ? existingFile.getId() : "null");
+
             if(existingFile != null) {
+                log.info("기존 파일 - 순서 업데이트: {} -> {}", existingFile.getImageIndex(), i+1);
                 existingFile.updateIndex(i+1);
-            }
-            else {
-                PostFile newFile = postFileMapper.toEntity(file, post);
+            } else {
+                log.info("새 파일 - 저장 시도: {}", originalUrl);
+
+                PostFileRequest newFileRequest = new PostFileRequest(
+                        file.fileName(),
+                        i + 1,
+                        originalUrl,
+                        file.contentType()
+                );
+                PostFile newFile = postFileMapper.toEntity(newFileRequest, post);
                 postFileRepository.save(newFile);
             }
         }
+    }
+
+    private String extractFileUrl(String fileUrl) {
+        if(fileUrl == null || fileUrl.isEmpty()) {
+            return null;
+        }
+
+        if(!fileUrl.startsWith("http")) {
+            return fileUrl;
+        }
+
+        String path = fileUrl.split("\\?")[0];
+        String originalUrl = path.substring(path.lastIndexOf("/") + 1);
+
+        log.info("extractFileUrl - 입력: {}", fileUrl);
+        log.info("extractFileUrl - 출력: {}", originalUrl);
+        log.info("extractFileUrl - 출력 해시코드: {}", originalUrl.hashCode());
+
+        return originalUrl;
     }
 }

@@ -28,16 +28,16 @@ public class PostFile {
     private Post post;
 
     @Column(name = "file_name", nullable = false)
-    private String fileName;
+    private String fileName;        // 원본 파일 이름
 
     @Column(nullable = false)
-    private String url;
+    private String url;             // 저장된 파일명
 
     @Column(name = "image_index", nullable = false)
-    private int imageIndex = 1;
+    private int imageIndex = 1;     // 파일 저장 순서
 
     @Column(nullable = false)
-    private FileType type;
+    private String contentType;            // MIME
 
     @CreatedDate
     @Column(name = "created_at", nullable = false,  updatable = false)

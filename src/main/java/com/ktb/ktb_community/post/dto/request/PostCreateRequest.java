@@ -12,6 +12,7 @@ public record PostCreateRequest (
     @Size(max = 255, message = "제목은 최대 255자입니다")
     String title,
 
+    @NotBlank(message = "본문은 필수입니다")
     String content,
 
     List<PostFileRequest> postImages

@@ -31,7 +31,7 @@ public class Post {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "post",  cascade = CascadeType.ALL)
