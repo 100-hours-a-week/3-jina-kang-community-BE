@@ -2,6 +2,7 @@ package com.ktb.ktb_community.user.mapper;
 
 import com.ktb.ktb_community.global.security.JwtProvider;
 import com.ktb.ktb_community.user.dto.request.ProfileImageRequest;
+import com.ktb.ktb_community.user.dto.response.ProfileImageResponse;
 import com.ktb.ktb_community.user.entity.ProfileImage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,20 +26,28 @@ public class ProfileImageMapper {
                 .build();
     }
 
-    // ProfileImage → URL 변환
-    public String toProfileImageUrl(ProfileImage profileImage) {
+    // ProfileImage → ProfileImageResponse
+    public ProfileImageResponse toProfileImageResponse(ProfileImage profileImage) {
         if (profileImage == null) {
-            return getDefaultProfileImageUrl();
+            return null;
         }
 
-        String url = profileImage.getUrl();
+        String url;
 
-        if (url.startsWith("http")) {
-            return url;
+        if (profileImage.getUrl().startsWith("http")) {
+            url = profileImage.getUrl();
+        }
+        else{
+            String profileImageName = profileImage.getUrl();
+            String profileImageToken = jwtProvider.createFileToken(profileImageName);
+            url = serverUrl + "/api/file/user/" + profileImageName + "?token=" + profileImageToken;
         }
 
-        String fileToken = jwtProvider.createFileToken(url);
-        return serverUrl + "/api/file/user/" + url + "?token=" + fileToken;
+        return new ProfileImageResponse(
+                profileImage.getFileName(),
+                url,
+                profileImage.getContentType()
+        );
     }
 
     private String getDefaultProfileImageUrl() {

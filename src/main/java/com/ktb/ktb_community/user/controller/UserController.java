@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
     // 회원가입
-    @PostMapping
+    @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> singup(
             @RequestBody SignupRequest request
     ) {
@@ -36,8 +36,34 @@ public class UserController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    // 닉네임 중복 확인 - 회원가입
+    @GetMapping("/signup/check-nickname")
+    public ResponseEntity<ApiResponse<Boolean>> checkNickname(
+            @RequestParam(required = true) String nickname
+    ) {
+        log.info("닉네임 중복확인 - 회원정보 변경시");
+
+        boolean response = userService.isNicknameExisted(nickname);
+
+        ApiResponse<Boolean> apiResponse = ApiResponse.success(response);
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    // 이메일 중복 확인 - 회원가입
+    @GetMapping("/signup/check-email")
+    public ResponseEntity<ApiResponse<Boolean>> checkEmail(
+            @RequestParam(required = true) String email
+    ) {
+        log.info("이메일 중복확인 - 회원정보 변경시");
+
+        boolean response = userService.isEmailExisted(email);
+
+        ApiResponse<Boolean> apiResponse = ApiResponse.success(response);
+        return ResponseEntity.ok(apiResponse);
+    }
+
     // 회원 정보 조회
-    @GetMapping("/me")
+    @GetMapping("/users/me")
     public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(
             @AuthenticationPrincipal Long userId
     ) {
@@ -50,7 +76,7 @@ public class UserController {
     }
 
     // 회원정보 수정
-    @PatchMapping("/me")
+    @PatchMapping("/users/me")
     public ResponseEntity<ApiResponse<ProfileResponse>> editProfile(
             @RequestBody ProfileEditRequest request,
             @AuthenticationPrincipal Long userId
@@ -65,7 +91,7 @@ public class UserController {
     }
 
     // 비밀번호 수정
-    @PatchMapping("/me/password")
+    @PatchMapping("/users/me/password")
     public ResponseEntity<ApiResponse<Void>> editPassword(
             @RequestBody PasswordEditRequest request,
             @AuthenticationPrincipal Long userId
@@ -79,5 +105,19 @@ public class UserController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    // 이메일 중복확인 / 닉네임 중복확인
+    // 닉네임 중복확인 - 회원정보 수정
+    @GetMapping("/users/check-nickname")
+    public ResponseEntity<ApiResponse<Boolean>> checkNickname(
+            @RequestParam(required = true) String nickname,
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("닉네임 중복확인 - 회원정보 변경시");
+
+        boolean response = userService.isNicknameDuplicated(nickname, userId);
+
+        ApiResponse<Boolean> apiResponse = ApiResponse.success(response);
+        return ResponseEntity.ok(apiResponse);
+    }
+
+
 }

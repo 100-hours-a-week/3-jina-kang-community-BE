@@ -57,15 +57,27 @@ public class UserService {
         User savedUser = userRepository.save(user);
     }
 
-    // 닉네임 중복확인
+    // 닉네임 중복확인 - 회원정보 수정
     @Transactional(readOnly = true)
-    public boolean isNicknameDuplicated(String nickname) {
-        return userRepository.existsByNickname(nickname);
+    public boolean isNicknameDuplicated(String nickname, Long userId) {
+        boolean result = !userRepository.existsByNicknameAndIdNot(nickname,  userId);
+        log.info("isNicknameDuplicated: {}", result);
+        return result;
     }
 
-    // 이메일 중복확인
+    // 닉네임 중복확인 - 회원가입
     @Transactional(readOnly = true)
-    public boolean isEmailDuplicated(String email) {
+    public boolean isNicknameExisted(String nickname) {
+        boolean result = !userRepository.existsByNickname(nickname);
+        log.info("isNicknameExisted: {}", result);
+        return result;
+    }
+
+    // 이메일 중복확인 - 회원가입
+    @Transactional(readOnly = true)
+    public boolean isEmailExisted(String email) {
+        boolean result = !userRepository.existsByEmail(email);
+        log.info("isEmailExisted: {}", result);
         return userRepository.existsByEmail(email);
     }
 
@@ -87,7 +99,7 @@ public class UserService {
         //사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
-        // 닉네임
+        // 닉네임 중복확인
         log.info("닉네임");
         String newNickname = request.nickname();
         if (userRepository.existsByNicknameAndIdNot(newNickname, userId)) {

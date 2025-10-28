@@ -4,6 +4,7 @@ import com.ktb.ktb_community.global.security.JwtProvider;
 import com.ktb.ktb_community.user.dto.request.ProfileEditRequest;
 import com.ktb.ktb_community.user.dto.request.ProfileImageRequest;
 import com.ktb.ktb_community.user.dto.request.SignupRequest;
+import com.ktb.ktb_community.user.dto.response.ProfileImageResponse;
 import com.ktb.ktb_community.user.dto.response.ProfileResponse;
 import com.ktb.ktb_community.user.dto.response.UserInfo;
 import com.ktb.ktb_community.user.entity.ProfileImage;
@@ -43,10 +44,14 @@ public class UserMapper {
     }
 
     public ProfileResponse toProfileResponse(User user) {
-        String profileImageUrl = profileImageMapper.toProfileImageUrl(user.getProfileImage());
+        ProfileImageResponse profileImageResponse = null;
+
+        if(user.getProfileImage() != null) {
+            profileImageResponse = profileImageMapper.toProfileImageResponse(user.getProfileImage());
+        }
 
         return new ProfileResponse(
-                profileImageUrl,
+                profileImageResponse,
                 user.getNickname(),
                 user.getEmail()
         );
