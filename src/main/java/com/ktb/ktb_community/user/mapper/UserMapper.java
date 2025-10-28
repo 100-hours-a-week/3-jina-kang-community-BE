@@ -1,8 +1,5 @@
 package com.ktb.ktb_community.user.mapper;
 
-import com.ktb.ktb_community.global.security.JwtProvider;
-import com.ktb.ktb_community.user.dto.request.ProfileEditRequest;
-import com.ktb.ktb_community.user.dto.request.ProfileImageRequest;
 import com.ktb.ktb_community.user.dto.request.SignupRequest;
 import com.ktb.ktb_community.user.dto.response.ProfileImageResponse;
 import com.ktb.ktb_community.user.dto.response.ProfileResponse;

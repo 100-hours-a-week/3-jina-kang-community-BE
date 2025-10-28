@@ -49,8 +49,4 @@ public class ProfileImageMapper {
                 profileImage.getContentType()
         );
     }
-
-    private String getDefaultProfileImageUrl() {
-        return serverUrl + "/images/default-profile.png";
-    }
 }
