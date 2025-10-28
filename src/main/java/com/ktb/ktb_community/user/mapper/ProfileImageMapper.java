@@ -38,7 +38,7 @@ public class ProfileImageMapper {
         }
 
         String fileToken = jwtProvider.createFileToken(url);
-        return serverUrl + "/api/file/" + url + "?token=" + fileToken;
+        return serverUrl + "/api/file/user/" + url + "?token=" + fileToken;
     }
 
     private String getDefaultProfileImageUrl() {

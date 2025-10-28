@@ -7,6 +7,8 @@ import com.ktb.ktb_community.global.security.JwtProvider;
 import com.ktb.ktb_community.post.entity.PostFile;
 import com.ktb.ktb_community.post.repository.PostFileRepository;
 import com.ktb.ktb_community.user.entity.ProfileImage;
+import com.ktb.ktb_community.user.repository.ProfileImageRepository;
+import com.ktb.ktb_community.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +33,7 @@ public class LocalFileService implements FileService {
     private String uploadPath;
 
     private final PostFileRepository postFileRepository;
+    private final ProfileImageRepository profileImageRepository;
     private final JwtProvider jwtProvider;
 
     @Override
@@ -95,28 +98,6 @@ public class LocalFileService implements FileService {
         } catch (MalformedURLException e) {
             throw new CustomException(ErrorCode.FILE_NOT_FOUND);
         }
-    }
-
-    @Override
-    public String getContentType(String fileName) {
-        PostFile file = postFileRepository.findByUrl(fileName)
-                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
-        String contentType = file.getContentType();
-
-        if(contentType == null || contentType.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_FILE);
-        }
-
-        ProfileImage profileImage = profileImageRepository.findByUrlAndDeletedAtIsNull(fileName)
-                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
-
-        String contentType = profileImage.getContentType();
-        if (contentType == null || contentType.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_FILE);
-        }
-
-
-        return contentType;
     }
 
     @Override

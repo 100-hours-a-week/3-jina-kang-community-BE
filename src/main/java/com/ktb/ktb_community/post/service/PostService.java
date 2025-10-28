@@ -3,6 +3,7 @@ package com.ktb.ktb_community.post.service;
 import com.ktb.ktb_community.global.common.dto.CursorResponse;
 import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
+import com.ktb.ktb_community.global.file.service.FileService;
 import com.ktb.ktb_community.post.dto.request.PostCreateRequest;
 import com.ktb.ktb_community.post.dto.request.PostFileRequest;
 import com.ktb.ktb_community.post.dto.request.PostUpdateRequest;
@@ -23,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -47,6 +49,7 @@ public class PostService {
     private final PostFileRepository postFileRepository;
     private final PostMapper postMapper;
     private final PostFileMapper postFileMapper;
+    private final FileService fileService;
 
     // post 목록 조회
     @Transactional(readOnly = true)
@@ -268,5 +271,37 @@ public class PostService {
         log.info("extractFileUrl - 출력 해시코드: {}", originalUrl.hashCode());
 
         return originalUrl;
+    }
+
+    // 게시글 파일 조회
+    @Transactional(readOnly = true)
+    public Resource getPostFile(String fileName, String token) {
+        log.info("getPostFile - fileName: {}", fileName);
+
+        // 파일 존재 여부 및 권한 확인
+        PostFile postFile = postFileRepository.findByUrl(fileName)
+                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
+
+        // 논리 삭제 확인
+        if (postFile.getDeletedAt() != null) {
+            throw new CustomException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        // 파일 조회
+        return fileService.getFileWithToken(fileName, token);
+    }
+
+    // 게시글 파일 ContentType 조회
+    @Transactional(readOnly = true)
+    public String getPostFileContentType(String fileName) {
+        PostFile postFile = postFileRepository.findByUrl(fileName)
+                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
+
+        String contentType = postFile.getContentType();
+        if (contentType == null || contentType.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_FILE);
+        }
+
+        return contentType;
     }
 }

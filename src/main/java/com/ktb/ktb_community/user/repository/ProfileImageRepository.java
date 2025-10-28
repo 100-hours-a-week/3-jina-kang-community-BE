@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface ProfileImageRepository extends JpaRepository<ProfileImage, Long> {
     Optional<ProfileImage> findByUrl(String url);
+    Optional<ProfileImage> findByUrlAndDeletedAtIsNull(String url);
 }

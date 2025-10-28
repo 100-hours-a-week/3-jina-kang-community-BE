@@ -42,7 +42,7 @@ public class PostFileMapper {
         else {
             String fileName = postFile.getUrl();
             String fileToken = jwtProvider.createFileToken(fileName);
-            url = serverUrl + "/api/file/" + fileName + "?token=" + fileToken;
+            url = serverUrl + "/api/file/post/" + fileName + "?token=" + fileToken;
         }
 
         return new PostFileResponse(
