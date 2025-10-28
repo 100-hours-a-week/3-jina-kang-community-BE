@@ -51,8 +51,7 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.PROFILE_IMAGE_NOT_FOUND));
 
         User user = userMapper.toEntity(signupRequest, profileImage);
-
-        User savedUser = userRepository.save(user);
+        userRepository.save(user);
     }
 
     // 닉네임 중복확인 - 회원정보 수정

@@ -8,7 +8,6 @@ import com.ktb.ktb_community.user.entity.ProfileImage;
 import com.ktb.ktb_community.user.entity.User;
 import com.ktb.ktb_community.user.entity.UserRole;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
