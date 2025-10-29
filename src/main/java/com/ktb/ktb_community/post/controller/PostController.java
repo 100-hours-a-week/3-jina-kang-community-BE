@@ -17,8 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @Slf4j
 @RestController
 @RequestMapping("/api/posts")
@@ -26,11 +24,6 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final FileService fileService;
-
-    @Value("${file.upload.path}")
-    private String uploadPath;
-
     /*
     Todo
      1. Authentication 객체 - 해결

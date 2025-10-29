@@ -20,8 +20,6 @@ import com.ktb.ktb_community.post.repository.PostRepository;
 import com.ktb.ktb_community.post.repository.PostStatusRepository;
 import com.ktb.ktb_community.user.entity.User;
 import com.ktb.ktb_community.user.repository.UserRepository;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -30,7 +28,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +42,6 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final PostStatusRepository postStatusRepository;
     private final PostFileRepository postFileRepository;
     private final PostMapper postMapper;
     private final PostFileMapper postFileMapper;

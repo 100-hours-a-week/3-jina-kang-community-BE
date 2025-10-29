@@ -1,7 +1,6 @@
 package com.ktb.ktb_community.global.file.controller;
 
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
-import com.ktb.ktb_community.global.file.dto.FileInfo;
 import com.ktb.ktb_community.global.file.dto.response.UploadFileResponse;
 import com.ktb.ktb_community.global.file.service.FileService;
 import com.ktb.ktb_community.post.service.PostService;
@@ -9,7 +8,6 @@ import com.ktb.ktb_community.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
