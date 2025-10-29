@@ -40,12 +40,11 @@ public class FileController {
     // 게시글 파일 조회
     @GetMapping("/post/{fileName}")
     public ResponseEntity<Resource> getFile(
-            @PathVariable String fileName,
-            @RequestParam String token
+            @PathVariable String fileName
     ) {
         log.info("file upload");
 
-        Resource resource = postService.getPostFile(fileName, token);
+        Resource resource = postService.getPostFile(fileName);
         String contentType = postService.getPostFileContentType(fileName);
 
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType)).body(resource);
@@ -54,12 +53,11 @@ public class FileController {
     // 프로필사진 이미지 조회
     @GetMapping("/user/{fileName}")
     public ResponseEntity<Resource> getProfileImage(
-            @PathVariable String fileName,
-            @RequestParam String token
+            @PathVariable String fileName
     ) {
         log.info("get profile image: {}", fileName);
 
-        Resource resource = userService.getProfileImage(fileName, token);
+        Resource resource = userService.getProfileImage(fileName);
         String contentType = userService.getProfileImageContentType(fileName);
 
         return ResponseEntity.ok()

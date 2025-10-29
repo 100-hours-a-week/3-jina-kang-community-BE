@@ -3,12 +3,6 @@ package com.ktb.ktb_community.global.file.service;
 import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
 import com.ktb.ktb_community.global.file.dto.response.UploadFileResponse;
-import com.ktb.ktb_community.global.security.JwtProvider;
-import com.ktb.ktb_community.post.entity.PostFile;
-import com.ktb.ktb_community.post.repository.PostFileRepository;
-import com.ktb.ktb_community.user.entity.ProfileImage;
-import com.ktb.ktb_community.user.repository.ProfileImageRepository;
-import com.ktb.ktb_community.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +25,6 @@ public class LocalFileService implements FileService {
 
     @Value("${file.upload.path}")
     private String uploadPath;
-
-    private final PostFileRepository postFileRepository;
-    private final ProfileImageRepository profileImageRepository;
-    private final JwtProvider jwtProvider;
 
     @Override
     public UploadFileResponse upLoadFile(MultipartFile file) {
@@ -99,28 +89,4 @@ public class LocalFileService implements FileService {
             throw new CustomException(ErrorCode.FILE_NOT_FOUND);
         }
     }
-
-    @Override
-    public Resource getFileWithToken(String fileName, String token) {
-        log.info("file token - token:{}", token);
-
-        if(token == null || token.isEmpty()){
-            throw new CustomException(ErrorCode.INVALID_FILE_TOKEN);
-        }
-        if(!jwtProvider.validateToken(token)){
-            throw new CustomException(ErrorCode.INVALID_FILE_TOKEN);
-        }
-        if(!jwtProvider.isFileToken(token)){
-            throw new CustomException(ErrorCode.INVALID_FILE_TOKEN);
-        }
-
-        String tokenfileName = jwtProvider.getFileNameFromToken(token);
-        if(!tokenfileName.equals(fileName)) {
-            throw new CustomException(ErrorCode.INVALID_FILE_TOKEN);
-        }
-
-        return getFile(fileName);
-    }
-
-
 }

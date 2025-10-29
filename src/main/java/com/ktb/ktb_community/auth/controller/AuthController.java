@@ -2,19 +2,21 @@ package com.ktb.ktb_community.auth.controller;
 
 import com.ktb.ktb_community.auth.dto.request.LoginRequest;
 import com.ktb.ktb_community.auth.dto.response.LoginResponse;
-import com.ktb.ktb_community.auth.dto.response.LoginResult;
-import com.ktb.ktb_community.auth.dto.response.TokenResponse;
 import com.ktb.ktb_community.auth.service.AuthService;
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
+import com.ktb.ktb_community.global.security.LoginUser;
+import com.ktb.ktb_community.user.dto.response.UserInfo;
+import com.ktb.ktb_community.user.entity.User;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
@@ -24,76 +26,28 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @Value("${jwt.refresh-token-expiration}")
-    private Long refreshTokenExpiration;
-
-
-    // 로그인
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest,
-                                                            HttpServletResponse response
+    public ResponseEntity<ApiResponse<UserInfo>> login(
+            @RequestBody LoginRequest loginRequest,
+            HttpServletResponse response
     ) {
-        log.info("login - userEmail: {}", loginRequest.email());
-
-        LoginResult result = authService.login(loginRequest);
-
-        Cookie cookie = new Cookie("refreshToken", result.refreshToken());
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) (refreshTokenExpiration / 1000));
+        LoginResponse result = authService.login(loginRequest);
+        Cookie cookie = result.cookie();
         response.addCookie(cookie);
 
-
-        LoginResponse loginResponse = new LoginResponse(
-                result.userInfo(),
-                result.accessToken()
-        );
-
-        ApiResponse<LoginResponse> apiResponse = ApiResponse.<LoginResponse>builder()
-                .success(true)
-                .data(loginResponse)
-                .build();
-
-        return ResponseEntity.ok(apiResponse);
+        UserInfo userInfo = result.userInfo();
+        return ResponseEntity.ok(ApiResponse.success(userInfo));
     }
 
-    // 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             HttpServletResponse response,
-            @AuthenticationPrincipal Long userId
+            HttpServletRequest request
     ) {
-        log.info("logout - userId: {}", userId);
+        log.info("logout");
 
-        authService.logout(userId);
+        authService.logout(request, response);
 
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
-
-        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
-                .success(true)
-                .build();
-
-        return ResponseEntity.ok(apiResponse);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
-
-    // access token 재발급
-    @PostMapping("/reissue/access")
-    public ResponseEntity<ApiResponse<TokenResponse>> reissueAccessToken(
-            @CookieValue(name = "refreshToken") String refreshToken
-    ) {
-        log.info("reissueAccessToken - refreshToken: {}", refreshToken);
-
-        TokenResponse tokenResponse = authService.reissueAccessToken(refreshToken);
-        ApiResponse<TokenResponse> apiResponse = ApiResponse.success(tokenResponse);
-
-        return ResponseEntity.ok(apiResponse);
-    }
-
-
 }

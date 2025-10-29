@@ -1,42 +1,37 @@
 package com.ktb.ktb_community.auth.service;
 
 import com.ktb.ktb_community.auth.dto.request.LoginRequest;
-import com.ktb.ktb_community.auth.dto.response.LoginResult;
-import com.ktb.ktb_community.auth.dto.response.TokenResponse;
+import com.ktb.ktb_community.auth.dto.response.LoginResponse;
 import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
-import com.ktb.ktb_community.global.security.JwtProvider;
+import com.ktb.ktb_community.global.security.MemberSession;
 import com.ktb.ktb_community.user.dto.response.UserInfo;
 import com.ktb.ktb_community.user.entity.User;
 import com.ktb.ktb_community.user.mapper.UserMapper;
 import com.ktb.ktb_community.user.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    /*
-    TODO
-        1. 로그인
-        2. 로그아웃
-        3. Access Token 재발급
-     */
-
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
-    private final RedisTemplate<String, String> redisTemplate;
     private final UserMapper userMapper;
-    private final RefreshTokenService  refreshTokenService;
+    private final RedisTemplate<String, MemberSession> redisTemplate;
+    private final PasswordEncoder passwordEncoder;
 
-    // 로그인
-    public LoginResult login(LoginRequest loginRequest) {
+    public LoginResponse login(LoginRequest loginRequest) {
         log.info("login - userEmail: {}", loginRequest.email());
 
         // 사용자 조회 - 이메일 확인
@@ -48,54 +43,46 @@ public class AuthService {
             throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
-        // 토큰 생성
-        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getRole());
-        String refreshToken = jwtProvider.createRefreshToken(user.getId());
+        String sessionId = UUID.randomUUID().toString();
+        String sessionKey = "SESSION-" + sessionId;
+        redisTemplate.opsForValue().set(sessionKey, new MemberSession(user.getId()), 30L, TimeUnit.MINUTES);
 
-        // refresh token redis에 저장
-        refreshTokenService.saveRefreshToken(user.getId(), refreshToken);
+        Cookie cookie = new Cookie("SESSION", sessionId);
+        cookie.setMaxAge(30 * 60);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setAttribute("SameSite", "None");
+        cookie.setSecure(true);
+        cookie.setDomain("localhost");
 
-        // UserInfo
         UserInfo userInfo = userMapper.toUserInfo(user);
 
-        return new LoginResult(userInfo, accessToken, refreshToken);
+        LoginResponse loginResponse = LoginResponse.builder()
+                .userInfo(userInfo)
+                .cookie(cookie)
+                .build();
+        return loginResponse;
     }
 
-    // 로그아웃
-    public void logout(Long userId) {
-        log.info("logout");
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        Cookie[] cookies = request.getCookies();
+        if(cookies != null) {
+            for(Cookie cookie : cookies) {
+                if("SESSION".equals(cookie.getName())) {
+                    String sessionId = cookie.getValue();
+                    String sessionKey = "SESSION-" + sessionId;
+                    // 레디스에서 세션 삭제
+                    redisTemplate.delete(sessionKey);
+                    // 쿠키 삭제
+                    Cookie deleteCookie = new Cookie("SESSION", null);
+                    deleteCookie.setMaxAge(0);
+                    deleteCookie.setPath("/");
+                    deleteCookie.setHttpOnly(true);
+                    response.addCookie(deleteCookie);
 
-        // refreshToken 삭제
-        refreshTokenService.deleteRefreshToken(userId);
-    }
-
-    // access token 재발급
-    public TokenResponse reissueAccessToken(String refreshToken) {
-        log.info("reissueAccessToken - refreshToken: {}", refreshToken);
-
-        // refresh token 유효성 검증
-        if(!jwtProvider.validateToken(refreshToken)) {
-            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+                    break;
+                }
+            }
         }
-        // refresh token이 맞는지 확인
-        if(!jwtProvider.isRefreshToken(refreshToken)) {
-            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
-        Long userId = jwtProvider.getUserIdFromToken(refreshToken);
-        // redis에서 refresh token 조회
-        if(!refreshTokenService.validateRefreshToken(userId, refreshToken)) {
-            throw new CustomException(ErrorCode.REFRESH_TOKEN_MISMATCH);
-        }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
-
-        String newToken = jwtProvider.createAccessToken(
-                user.getId(),
-                user.getRole()
-        );
-
-        return  new TokenResponse(newToken);
     }
 }

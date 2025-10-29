@@ -161,7 +161,7 @@ public class UserService {
 
     // 프로필 이미지 조회
     @Transactional(readOnly = true)
-    public Resource getProfileImage(String fileName, String token) {
+    public Resource getProfileImage(String fileName) {
         log.info("getProfileImage - fileName: {}", fileName);
 
         // 파일 존재 여부 확인
@@ -169,7 +169,7 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
 
         // 실제 파일 조회
-        return fileService.getFileWithToken(fileName, token);
+        return fileService.getFile(fileName);
     }
 
     // 프로필 이미지 ContentType 조회

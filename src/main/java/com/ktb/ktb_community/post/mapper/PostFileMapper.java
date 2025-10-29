@@ -1,7 +1,5 @@
 package com.ktb.ktb_community.post.mapper;
 
-import com.ktb.ktb_community.global.file.entity.FileType;
-import com.ktb.ktb_community.global.security.JwtProvider;
 import com.ktb.ktb_community.post.dto.request.PostFileRequest;
 import com.ktb.ktb_community.post.dto.response.PostFileResponse;
 import com.ktb.ktb_community.post.entity.Post;
@@ -18,8 +16,6 @@ public class PostFileMapper {
 
     @Value("${server.base-url}")
     private String serverUrl;
-
-    private final JwtProvider jwtProvider;
 
     public PostFile toEntity(PostFileRequest file, Post post) {
         PostFile postFile = PostFile.builder()
@@ -41,8 +37,7 @@ public class PostFileMapper {
         }
         else {
             String fileName = postFile.getUrl();
-            String fileToken = jwtProvider.createFileToken(fileName);
-            url = serverUrl + "/api/file/post/" + fileName + "?token=" + fileToken;
+            url = serverUrl + "/api/file/post/" + fileName;
         }
 
         return new PostFileResponse(

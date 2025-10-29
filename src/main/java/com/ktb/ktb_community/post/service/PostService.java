@@ -275,7 +275,7 @@ public class PostService {
 
     // 게시글 파일 조회
     @Transactional(readOnly = true)
-    public Resource getPostFile(String fileName, String token) {
+    public Resource getPostFile(String fileName) {
         log.info("getPostFile - fileName: {}", fileName);
 
         // 파일 존재 여부 및 권한 확인
@@ -288,7 +288,7 @@ public class PostService {
         }
 
         // 파일 조회
-        return fileService.getFileWithToken(fileName, token);
+        return fileService.getFile(fileName);
     }
 
     // 게시글 파일 ContentType 조회
