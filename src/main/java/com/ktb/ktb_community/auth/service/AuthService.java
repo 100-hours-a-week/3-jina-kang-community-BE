@@ -41,11 +41,11 @@ public class AuthService {
 
         // 사용자 조회 - 이메일 확인
         User user = userRepository.findByEmailAndDeletedAtIsNull(loginRequest.email())
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHRIZED_USER));
+                .orElseThrow(() -> new CustomException(ErrorCode.LOGIN_FAILED));
 
         // 비밀번호 검증
         if(!passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
-            throw new CustomException(ErrorCode.UNAUTHRIZED_USER);
+            throw new CustomException(ErrorCode.LOGIN_FAILED);
         }
 
         // 토큰 생성

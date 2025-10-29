@@ -1,6 +1,7 @@
 package com.ktb.ktb_community.user.controller;
 
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
+import com.ktb.ktb_community.user.dto.request.PasswordCheckRequest;
 import com.ktb.ktb_community.user.dto.request.PasswordEditRequest;
 import com.ktb.ktb_community.user.dto.request.ProfileEditRequest;
 import com.ktb.ktb_community.user.dto.request.SignupRequest;
@@ -87,6 +88,19 @@ public class UserController {
 
         ApiResponse<ProfileResponse> apiResponse = ApiResponse.success(response);
 
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    // 비밀번호 확인
+    @PostMapping("/users/me/password")
+    public ResponseEntity<ApiResponse<Boolean>> checkPassword(
+            @RequestBody PasswordCheckRequest request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        log.info("기존 비밀번호 확인");
+
+        boolean result = userService.checkPassword(request, userId);
+        ApiResponse<Boolean> apiResponse = ApiResponse.success(result);
         return ResponseEntity.ok(apiResponse);
     }
 
