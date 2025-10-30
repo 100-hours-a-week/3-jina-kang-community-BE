@@ -6,14 +6,14 @@ import com.ktb.ktb_community.auth.dto.response.LoginResult;
 import com.ktb.ktb_community.auth.dto.response.TokenResponse;
 import com.ktb.ktb_community.auth.service.AuthService;
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
+import com.ktb.ktb_community.global.security.LoginUser;
+import com.ktb.ktb_community.user.entity.User;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -62,11 +62,11 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             HttpServletResponse response,
-            @AuthenticationPrincipal Long userId
+            @LoginUser User user
     ) {
-        log.info("logout - userId: {}", userId);
+        log.info("logout - userId: {}", user.getId());
 
-        authService.logout(userId);
+        authService.logout(user.getId());
 
         Cookie cookie = new Cookie("refreshToken", null);
         cookie.setHttpOnly(true);

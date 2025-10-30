@@ -2,8 +2,9 @@ package com.ktb.ktb_community.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ktb.ktb_community.global.common.dto.ErrorResponse;
-import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
+import com.ktb.ktb_community.user.entity.User;
+import com.ktb.ktb_community.user.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
@@ -12,23 +13,28 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 
-@Component
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
+
+    private static final List<String> EXCLUDED_URLS = List.of(
+            "/api/auth/login",
+            "/api/signup",
+            "/api/signup/**",
+            "/api/file/**"
+    );
+
+
 
     @Override
     protected void doFilterInternal(
@@ -36,13 +42,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain chain
     ) throws ServletException, IOException {
-        try {
-            // 헤더에서 토큰 추출
-            String token = extractToken(request);
+        String requestPath = request.getRequestURI();
 
-            // 토큰 검증 후 SecurityContext에 저장
+        // 인증 필요없는 경로면 통과
+        if(isExcludedPath(requestPath)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            // 토큰 추출
+            String token = extractToken(request);
+            // 토큰 없으면 예외처리
             if(token == null) {
-                chain.doFilter(request, response);
+                sendErrorResponse(response, ErrorCode.UNAUTHORIZED);
                 return;
             }
 
@@ -51,22 +64,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long  userId = jwtProvider.getUserIdFromToken(token);
                 String userRole = jwtProvider.getUserRoleFromToken(token).toString();
 
-                //
-                List<GrantedAuthority> authorities = List.of(
-                        new SimpleGrantedAuthority(userRole)
-                );
+                // argument resolver에 user 정보 저장
+                User user = userRepository.findById(userId)
+                        .orElse(null);
 
-                // Authentication 객체 생성 -> 사용자 정보 저장
-                Authentication authentication = new UsernamePasswordAuthenticationToken(
-                        userId,         // 사용자 정보
-                        null,           // credential
-                        authorities     // 인가 정보
-                );
+                if(user == null) {
+                    sendErrorResponse(response, ErrorCode.UNAUTHORIZED);
+                    return;
+                }
 
-                // SecurityContextHolder에 저장
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.info("인증 성공 - userId: {}", user.getId());
+
+                request.setAttribute("loginUser", user);
             }
-
+            else {
+                sendErrorResponse(response, ErrorCode.INVALID_TOKEN);
+                return;
+            }
             chain.doFilter(request, response);
         } catch (ExpiredJwtException e) {
             // Access Token 만료
@@ -104,5 +118,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jsonResponse = objectMapper.writeValueAsString(errorResponse);
         response.getWriter().write(jsonResponse);
+    }
+
+    private boolean isExcludedPath(String requestURI) {
+        return EXCLUDED_URLS.stream()
+                .anyMatch(requestURI::startsWith);
     }
 }

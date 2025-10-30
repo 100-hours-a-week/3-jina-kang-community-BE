@@ -3,20 +3,19 @@ package com.ktb.ktb_community.post.controller;
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
 import com.ktb.ktb_community.global.common.dto.CursorResponse;
 import com.ktb.ktb_community.global.file.service.FileService;
+import com.ktb.ktb_community.global.security.LoginUser;
 import com.ktb.ktb_community.post.dto.request.PostCreateRequest;
 import com.ktb.ktb_community.post.dto.request.PostUpdateRequest;
 import com.ktb.ktb_community.post.dto.response.PostDetailResponse;
 import com.ktb.ktb_community.post.dto.response.PostListResponse;
 import com.ktb.ktb_community.post.service.PostService;
+import com.ktb.ktb_community.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -59,10 +58,11 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity< ApiResponse<PostDetailResponse>> getPost(
             @PathVariable Long postId,
-            @AuthenticationPrincipal Long userId) {
+            @LoginUser User user
+    ) {
         log.info("Post 상세 조회");
 
-        PostDetailResponse response = postService.getPostDetail(postId, userId);
+        PostDetailResponse response = postService.getPostDetail(postId, user.getId());
 
         ApiResponse<PostDetailResponse> apiResponse = ApiResponse.success(response);
 
@@ -73,10 +73,10 @@ public class PostController {
     @PostMapping
     public ResponseEntity<ApiResponse<PostDetailResponse>> createPost(
             @RequestBody PostCreateRequest request,
-            @AuthenticationPrincipal Long userId
+            @LoginUser User user
     ) {
-       log.info("Post 작성 - userId: {}", userId);
-        PostDetailResponse response = postService.createPost(request, userId);
+       log.info("Post 작성 - userId: {}", user.getId());
+        PostDetailResponse response = postService.createPost(request, user.getId());
 
         ApiResponse<PostDetailResponse> apiResponse = ApiResponse.success(response);
 
@@ -91,10 +91,11 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostDetailResponse>> updatePost(
             @PathVariable Long postId,
             @RequestBody PostUpdateRequest request,
-            @AuthenticationPrincipal Long userId) {
+            @LoginUser User user
+    ) {
         log.info("Post 수정 - postId: {}", postId);
 
-        PostDetailResponse response = postService.updatePost(postId, request, userId);
+        PostDetailResponse response = postService.updatePost(postId, request, user.getId());
 
         ApiResponse<PostDetailResponse> apiResponse = ApiResponse.success(response);
 
@@ -105,11 +106,11 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
-            @AuthenticationPrincipal Long userId
+            @LoginUser User user
     ) {
         log.info("Post 삭제 -  postId: {}", postId);
 
-        postService.deletePost(postId, userId);
+        postService.deletePost(postId, user.getId());
 
         ApiResponse<Void> apiResponse = ApiResponse.success(null);
 
