@@ -1,0 +1,18 @@
+package com.ktb.ktb_community.post.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+import java.util.List;
+
+public record PostUpdateRequest (
+
+    @NotBlank(message = "제목은 필수입니다")
+    @Size(max = 255, message = "제목은 최대 255자입니다")
+    String title,
+
+    @NotBlank(message = "본문은 필수입니다")
+    String content,
+
+    List<PostFileRequest> postImages
+){}
