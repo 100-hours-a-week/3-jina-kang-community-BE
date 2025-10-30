@@ -31,7 +31,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/login",
             "/api/signup",
             "/api/signup/**",
-            "/api/file/**"
+            "/api/file/post",
+            "/api/file/user"
     );
 
 
@@ -43,9 +44,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain chain
     ) throws ServletException, IOException {
         String requestPath = request.getRequestURI();
+        log.info("requestPath: {}", requestPath);
 
         // 인증 필요없는 경로면 통과
         if(isExcludedPath(requestPath)) {
+            log.info("Excluded path: {}", requestPath);
             chain.doFilter(request, response);
             return;
         }
