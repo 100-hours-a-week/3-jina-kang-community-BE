@@ -6,5 +6,6 @@ public record UserInfo(
         Long userId,
         UserRole userRole,
         String profileImageUrl,
-        String email
+        String email,
+        String refreshToken
 ) {}

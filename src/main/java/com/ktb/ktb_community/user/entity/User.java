@@ -37,6 +37,9 @@ public class User {
     @JoinColumn(name = "profile_image_id", nullable = false)
     private ProfileImage profileImage;
 
+    @Column(name = "refresh_token", nullable = true, length = 500)
+    private String refreshToken;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -55,5 +58,13 @@ public class User {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void deleteRefreshToken() {
+        this.refreshToken = null;
+    }
+
+    public void  updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }

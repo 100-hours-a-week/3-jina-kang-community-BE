@@ -52,11 +52,8 @@ public class AuthService {
         String accessToken = jwtProvider.createAccessToken(user.getId(), user.getRole());
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
 
-        // refresh token redis에 저장
-        refreshTokenService.saveRefreshToken(user.getId(), refreshToken);
-
         // UserInfo
-        UserInfo userInfo = userMapper.toUserInfo(user);
+        UserInfo userInfo = userMapper.toUserInfo(user, refreshToken);
 
         return new LoginResult(userInfo, accessToken, refreshToken);
     }
