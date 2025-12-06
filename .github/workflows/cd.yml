@@ -1,0 +1,81 @@
+name: Backend CD
+
+on:
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    strategy:
+      matrix:
+        include:
+          - name: AZ-A
+            host: ${{ secrets.EC2_HOST_AZ_A_BACKEND }}
+            db_host: ${{ secrets.DB_HOST_MASTER }}
+          - name: AZ-B
+            host: ${{ secrets.EC2_HOST_AZ_B_BACKEND }}
+            db_host: ${{ secrets.DB_HOST_REPLICA }}
+
+    steps:
+      - name: Deploy to ${{ matrix.name }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ matrix.host }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🚀 Starting deployment on ${{ matrix.name }}..."
+            
+            # ECR 로그인
+            aws ecr get-login-password --region ap-northeast-2 | \
+              docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+            
+            # 최신 이미지 pull
+            docker pull ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+            
+            # 기존 컨테이너 중지 및 제거
+            docker stop backend-app || true
+            docker rm backend-app || true
+            
+            # 새 컨테이너 실행
+            docker run -d \
+              --name backend-app \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -e DB_HOST=${{ matrix.db_host }} \
+              -e DB_NAME=${{ secrets.DB_NAME }} \
+              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }} \
+              -e JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }} \
+              -e JWT_FILE_EXPIRATION=${{ secrets.JWT_FILE_EXPIRATION }} \
+              -e ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }} \
+              -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
+              -e CLOUDFRONT_DOMAIN=${{ secrets.CLOUDFRONT_DOMAIN }} \
+              -e API_GATEWAY_UPLOAD_URL=${{ secrets.API_GATEWAY_UPLOAD_URL }} \
+              ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+            
+            # 헬스 체크 대기
+            echo "⏳ Waiting for application to start..."
+            sleep 30
+            
+            # 헬스 체크
+            if curl -f http://localhost:8080/actuator/health; then
+              echo "✅ Deployment successful on ${{ matrix.name }}!"
+            else
+              echo "❌ Health check failed on ${{ matrix.name }}"
+              exit 1
+            fi
+            
+            # 이전 이미지 정리
+            docker image prune -f
+            
+            echo "🎉 Deployment completed on ${{ matrix.name }}"

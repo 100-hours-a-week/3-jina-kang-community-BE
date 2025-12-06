@@ -1,0 +1,62 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Generate image tags
+        id: image-tag
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "Image will be tagged as: ${SHORT_SHA} and latest"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.ECR_REGISTRY }}/backend-app:${{ steps.image-tag.outputs.short_sha }} .
+          docker tag ${{ secrets.ECR_REGISTRY }}/backend-app:${{ steps.image-tag.outputs.short_sha }} \
+                     ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ secrets.ECR_REGISTRY }}/backend-app:${{ steps.image-tag.outputs.short_sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+
+      - name: Image digest
+        run: |
+          echo "✅ Image pushed successfully!"
+          echo "Tags: ${{ steps.image-tag.outputs.short_sha }}, latest"
+          echo "Registry: ${{ secrets.ECR_REGISTRY }}/backend-app"
