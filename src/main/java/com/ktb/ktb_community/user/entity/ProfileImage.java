@@ -22,8 +22,11 @@ public class ProfileImage {
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
-    @Column(nullable = false, length = 255)
-    private String url;
+    @Column(name = "file_key", nullable = false, length = 500)
+    private String fileKey;                // S3 파일 키
+
+    @Column(nullable = false, length = 500)
+    private String url;                    // CloudFront URL
 
     @Column(nullable = false)
     private String contentType;            // MIME

@@ -1,32 +1,23 @@
 package com.ktb.ktb_community.post.mapper;
 
-import com.ktb.ktb_community.global.file.entity.FileType;
-import com.ktb.ktb_community.global.security.JwtProvider;
 import com.ktb.ktb_community.post.dto.request.PostFileRequest;
 import com.ktb.ktb_community.post.dto.response.PostFileResponse;
 import com.ktb.ktb_community.post.entity.Post;
 import com.ktb.ktb_community.post.entity.PostFile;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class PostFileMapper {
-
-    @Value("${server.base-url}")
-    private String serverUrl;
-
-    private final JwtProvider jwtProvider;
 
     public PostFile toEntity(PostFileRequest file, Post post) {
         PostFile postFile = PostFile.builder()
                 .post(post)
                 .fileName(file.fileName())
+                .fileKey(file.fileKey())
                 .imageIndex(file.fileOrder())
-                .url(file.fileUrl())
+                .url(file.s3Url())
                 .contentType(file.contentType())
                 .build();
 
@@ -34,21 +25,11 @@ public class PostFileMapper {
     }
 
     public PostFileResponse toPostFileResponse(PostFile postFile) {
-        String url;
-
-        if(postFile.getUrl().startsWith("http")) {
-            url = postFile.getUrl();
-        }
-        else {
-            String fileName = postFile.getUrl();
-            String fileToken = jwtProvider.createFileToken(fileName);
-            url = serverUrl + "/api/file/post/" + fileName + "?token=" + fileToken;
-        }
-
+        // S3/CloudFront URL을 그대로 반환
         return new PostFileResponse(
                 postFile.getId(),
                 postFile.getFileName(),
-                url,
+                postFile.getUrl(),
                 postFile.getImageIndex(),
                 postFile.getContentType()
         );
