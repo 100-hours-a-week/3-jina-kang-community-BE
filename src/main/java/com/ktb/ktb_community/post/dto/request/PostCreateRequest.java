@@ -1,6 +1,5 @@
 package com.ktb.ktb_community.post.dto.request;
 
-import com.ktb.ktb_community.global.file.dto.FileInfo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 

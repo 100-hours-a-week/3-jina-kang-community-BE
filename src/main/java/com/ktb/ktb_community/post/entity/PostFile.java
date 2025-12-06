@@ -1,6 +1,5 @@
 package com.ktb.ktb_community.post.entity;
 
-import com.ktb.ktb_community.global.file.entity.FileType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;

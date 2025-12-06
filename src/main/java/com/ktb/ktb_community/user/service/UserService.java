@@ -106,7 +106,7 @@ public class UserService {
         // 프로필 이미지
         ProfileImage newProfileImage = user.getProfileImage();
         if (request.profileImage() != null) {
-            // 기존 프로필 이미지 논리
+            // 기존 프로필 이미지 삭제
             ProfileImage oldProfileImage = user.getProfileImage();
             if (oldProfileImage != null && oldProfileImage.getDeletedAt() == null) {
                 oldProfileImage.markAsDeleted();
