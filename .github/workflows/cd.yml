@@ -38,7 +38,7 @@ jobs:
               docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
             
             # 최신 이미지 pull
-            docker pull ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+            docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
             
             # 기존 컨테이너 중지 및 제거
             docker stop backend-app || true
@@ -61,7 +61,7 @@ jobs:
               -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
               -e CLOUDFRONT_DOMAIN=${{ secrets.CLOUDFRONT_DOMAIN }} \
               -e API_GATEWAY_UPLOAD_URL=${{ secrets.API_GATEWAY_UPLOAD_URL }} \
-              ${{ secrets.ECR_REGISTRY }}/backend-app:latest
+              ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
             
             # 헬스 체크 대기
             echo "⏳ Waiting for application to start..."
