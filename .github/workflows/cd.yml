@@ -86,3 +86,4 @@ jobs:
             docker image prune -f
             
             echo "🎉 Deployment completed on ${{ steps.vars.outputs.name }}"
+            
