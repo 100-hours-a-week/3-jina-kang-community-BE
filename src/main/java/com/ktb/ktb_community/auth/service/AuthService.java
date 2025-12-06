@@ -12,7 +12,6 @@ import com.ktb.ktb_community.user.mapper.UserMapper;
 import com.ktb.ktb_community.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
-    private final RedisTemplate<String, String> redisTemplate;
     private final UserMapper userMapper;
     private final RefreshTokenService  refreshTokenService;
 
@@ -80,7 +78,7 @@ public class AuthService {
         }
 
         Long userId = jwtProvider.getUserIdFromToken(refreshToken);
-        // redis에서 refresh token 조회
+        // refresh token 조회
         if(!refreshTokenService.validateRefreshToken(userId, refreshToken)) {
             throw new CustomException(ErrorCode.REFRESH_TOKEN_MISMATCH);
         }

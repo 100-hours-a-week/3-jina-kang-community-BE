@@ -2,10 +2,10 @@ package com.ktb.ktb_community.comment.repository;
 
 import com.ktb.ktb_community.comment.dto.response.CommentResponse;
 import com.ktb.ktb_community.comment.entity.Comment;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
