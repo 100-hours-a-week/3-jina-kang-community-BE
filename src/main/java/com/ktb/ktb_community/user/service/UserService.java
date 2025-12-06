@@ -2,7 +2,6 @@ package com.ktb.ktb_community.user.service;
 
 import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
-import com.ktb.ktb_community.global.file.service.FileService;
 import com.ktb.ktb_community.user.dto.request.PasswordCheckRequest;
 import com.ktb.ktb_community.user.dto.request.PasswordEditRequest;
 import com.ktb.ktb_community.user.dto.request.ProfileEditRequest;
@@ -16,7 +15,6 @@ import com.ktb.ktb_community.user.repository.ProfileImageRepository;
 import com.ktb.ktb_community.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +29,6 @@ public class UserService {
     private final UserMapper userMapper;
     private final ProfileImageMapper profileImageMapper;
     private final PasswordEncoder passwordEncoder;
-    private final FileService fileService;
 
     // 회원가입
     public void signup(SignupRequest request) {
@@ -159,31 +156,7 @@ public class UserService {
         user.updatePassword(encodedPassword);
     }
 
-    // 프로필 이미지 조회
-    @Transactional(readOnly = true)
-    public Resource getProfileImage(String fileName, String token) {
-        log.info("getProfileImage - fileName: {}", fileName);
-
-        // 파일 존재 여부 확인
-        ProfileImage profileImage = profileImageRepository.findByUrlAndDeletedAtIsNull(fileName)
-                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
-
-        // 실제 파일 조회
-        return fileService.getFileWithToken(fileName, token);
-    }
-
-    // 프로필 이미지 ContentType 조회
-    @Transactional(readOnly = true)
-    public String getProfileImageContentType(String fileName) {
-        ProfileImage profileImage = profileImageRepository.findByUrlAndDeletedAtIsNull(fileName)
-                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
-
-        String contentType = profileImage.getContentType();
-        if (contentType == null || contentType.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_FILE);
-        }
-
-        return contentType;
-    }
+    // 프로필 이미지 조회 - S3/CloudFront 사용으로 더 이상 필요 없음
+    // Mapper에서 URL을 직접 반환하므로 이 메서드는 제거 예정
 
 }
