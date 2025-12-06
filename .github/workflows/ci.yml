@@ -59,4 +59,4 @@ jobs:
         run: |
           echo "✅ Image pushed successfully!"
           echo "Tags: ${{ steps.image-tag.outputs.short_sha }}, latest"
-          echo "Registry: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY_BACKEND }}
+          echo "Registry: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY_BACKEND }}"
