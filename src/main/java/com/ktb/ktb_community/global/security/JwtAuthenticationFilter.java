@@ -2,11 +2,7 @@ package com.ktb.ktb_community.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ktb.ktb_community.global.common.dto.ErrorResponse;
-import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -66,20 +62,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // SecurityContextHolder에 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-            chain.doFilter(request, response);
-        } catch (ExpiredJwtException e) {
-            // Access Token 만료
-            sendErrorResponse(response, ErrorCode.TOKEN_EXPIRED);
-
-        } catch (MalformedJwtException | SignatureException e) {
-            // 잘못된 토큰
-            sendErrorResponse(response, ErrorCode.INVALID_TOKEN);
-
         } catch (Exception e) {
-            // 기타 에러
-            sendErrorResponse(response, ErrorCode.UNAUTHORIZED);
+            request.setAttribute("exception", e);
         }
+
+        chain.doFilter(request, response);
     }
 
     // 헤더에서 토큰 추출
