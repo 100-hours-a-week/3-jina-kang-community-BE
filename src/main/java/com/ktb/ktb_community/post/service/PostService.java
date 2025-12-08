@@ -15,6 +15,7 @@ import com.ktb.ktb_community.post.entity.PostStatus;
 import com.ktb.ktb_community.post.mapper.PostFileMapper;
 import com.ktb.ktb_community.post.mapper.PostMapper;
 import com.ktb.ktb_community.post.repository.PostFileRepository;
+import com.ktb.ktb_community.post.repository.PostLikeRepository;
 import com.ktb.ktb_community.post.repository.PostRepository;
 import com.ktb.ktb_community.post.repository.PostStatusRepository;
 import com.ktb.ktb_community.user.entity.User;
@@ -41,6 +42,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostStatusRepository postStatusRepository;
+    private final PostLikeRepository postLikeRepository;
     private final PostFileRepository postFileRepository;
     private final PostMapper postMapper;
     private final PostFileMapper postFileMapper;
@@ -84,8 +86,10 @@ public class PostService {
         List<PostFile> postFiles = postFileRepository.findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(postId);
         // postFile Entity -> dto
         List<PostFileResponse> fileResponses = postFileMapper.toPostFileResponseList(postFiles);
+        // 좋아요 여부 확인
+        boolean isLiked = userId != null && postLikeRepository.existsByPostIdAndUserId(postId, userId);
         // 응답 dto
-        PostDetailResponse response = postMapper.toPostDetailResponse(post, fileResponses, userId);
+        PostDetailResponse response = postMapper.toPostDetailResponse(post, fileResponses, userId, isLiked);
 
         return response;
     }
@@ -118,7 +122,8 @@ public class PostService {
         }
         // 저장된 게시물 반환
         // Entity -> DTO
-        PostDetailResponse response = postMapper.toPostDetailResponse(savedPost, savedPostFileList, userId);
+        boolean isLiked = false; // 새로 생성한 게시글 -> 좋아요 전
+        PostDetailResponse response = postMapper.toPostDetailResponse(savedPost, savedPostFileList, userId, isLiked);
 
         return response;
     }
@@ -150,8 +155,10 @@ public class PostService {
                 .findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(postId);
         List<PostFileResponse> savedPostFileResponseList = postFileMapper
                 .toPostFileResponseList(savedPostFileList);
+        // 좋아요 여부 확인
+        boolean isLiked = postLikeRepository.existsByPostIdAndUserId(postId, userId);
         // 업데이트한 게시글 상세조회 데이터 조회
-        PostDetailResponse response = postMapper.toPostDetailResponse(post, savedPostFileResponseList, userId);
+        PostDetailResponse response = postMapper.toPostDetailResponse(post, savedPostFileResponseList, userId, isLiked);
 
         return response;
     }

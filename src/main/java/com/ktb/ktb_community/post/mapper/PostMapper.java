@@ -27,7 +27,7 @@ public class PostMapper {
 
 
     // Entity -> DTO
-    public PostDetailResponse toPostDetailResponse(Post post, List<PostFileResponse> postfiles, Long userId) {
+    public PostDetailResponse toPostDetailResponse(Post post, List<PostFileResponse> postfiles, Long userId, boolean isLiked) {
 
         Long viewCount = (post.getPostStatus() != null) ? post.getPostStatus().getViewCount() : 0L;
         Long likeCount = (post.getPostStatus() != null) ? post.getPostStatus().getLikeCount() : 0L;
@@ -42,7 +42,8 @@ public class PostMapper {
                 viewCount,
                 post.getCreatedAt(),
                 postfiles,
-                isAuthor
+                isAuthor,
+                isLiked
         );
     }
 }
