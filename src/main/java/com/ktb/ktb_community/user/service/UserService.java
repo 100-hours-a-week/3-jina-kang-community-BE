@@ -155,8 +155,4 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(request.newPassword());
         user.updatePassword(encodedPassword);
     }
-
-    // 프로필 이미지 조회 - S3/CloudFront 사용으로 더 이상 필요 없음
-    // Mapper에서 URL을 직접 반환하므로 이 메서드는 제거 예정
-
 }

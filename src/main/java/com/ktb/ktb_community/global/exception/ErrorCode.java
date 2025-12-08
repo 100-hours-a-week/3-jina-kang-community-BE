@@ -32,7 +32,8 @@ public enum ErrorCode {
     // comment
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다"),
     // like
-
+    ALREADY_LIKE(HttpStatus.CONFLICT, "이미 좋아요한 글입니다."),
+    LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "좋아요를 하지 않은 글입니다."),
     // file
     INVALID_FILE(HttpStatus.BAD_REQUEST, "올바르지 않은 파일입니다"),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "파일이 없습니다"),
