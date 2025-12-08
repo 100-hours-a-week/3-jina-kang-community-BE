@@ -17,7 +17,7 @@ public class PostLikeController {
     private final PostLikeService  postLikeService;
 
     // Post - 좋아요
-    @PostMapping
+    @PostMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> postLike(
             @PathVariable Long postId,
             @AuthenticationPrincipal Long userId
@@ -30,7 +30,7 @@ public class PostLikeController {
     }
 
     // Delete - 좋아요 취소
-    @DeleteMapping
+    @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePostLike(
             @PathVariable Long postId,
             @AuthenticationPrincipal Long userId
