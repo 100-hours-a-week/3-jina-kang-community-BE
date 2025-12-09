@@ -1,6 +1,11 @@
 # DeepScope
 
+## 프로젝트 소개
 > 게시판 커뮤니티
+
+- 프로젝트 참여 인원: 1명(개인 프로젝트)  
+- 기간: 2025.9.8~2025.12.9  
+- 기술의 사용 이유와 트레이드오프에 집중하고, 클라우드 네이티브한 환경을 목표로 합니다.
 
 ## ERD
 <img width="800" height="462" alt="Image" src="https://github.com/user-attachments/assets/e525a44f-4d98-4da3-a8ba-5b32dac75869" />
@@ -8,7 +13,7 @@
 ## API 명세서
 
 ## 시스템 아키텍처
-<img width="800" height="918" alt="Image" src="https://github.com/user-attachments/assets/5364effd-353b-4ceb-bce4-f5a796d56076" />
+<img width="800" height="918" alt="Image" src="https://github.c그래서om/user-attachments/assets/5364effd-353b-4ceb-bce4-f5a796d56076" />
 
 ## 레포지토리 구조
 <img width="387" height="815" alt="Image" src="https://github.com/user-attachments/assets/3e0de223-987d-4332-a1d1-cf9ee613483d" />
