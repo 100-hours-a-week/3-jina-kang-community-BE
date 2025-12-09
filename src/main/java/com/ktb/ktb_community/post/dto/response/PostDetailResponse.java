@@ -13,5 +13,6 @@ public record PostDetailResponse (
     LocalDateTime createdAt,
     List<PostFileResponse> postFiles,
 
-    boolean isAuthor
+    boolean isAuthor,
+    boolean isLiked
 ){}

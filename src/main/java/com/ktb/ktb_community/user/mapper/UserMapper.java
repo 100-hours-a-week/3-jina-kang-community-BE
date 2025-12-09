@@ -30,12 +30,13 @@ public class UserMapper {
         return user;
     }
 
-    public UserInfo toUserInfo(User user) {
+    public UserInfo toUserInfo(User user, String refreshToken) {
         return new UserInfo(
                 user.getId(),
                 user.getRole(),
                 user.getProfileImage().getUrl(),
-                user.getEmail()
+                user.getEmail(),
+                refreshToken
         );
     }
 

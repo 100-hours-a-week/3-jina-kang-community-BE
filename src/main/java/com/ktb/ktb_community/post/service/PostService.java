@@ -3,7 +3,6 @@ package com.ktb.ktb_community.post.service;
 import com.ktb.ktb_community.global.common.dto.CursorResponse;
 import com.ktb.ktb_community.global.exception.CustomException;
 import com.ktb.ktb_community.global.exception.ErrorCode;
-import com.ktb.ktb_community.global.file.service.FileService;
 import com.ktb.ktb_community.post.dto.request.PostCreateRequest;
 import com.ktb.ktb_community.post.dto.request.PostFileRequest;
 import com.ktb.ktb_community.post.dto.request.PostUpdateRequest;
@@ -16,21 +15,18 @@ import com.ktb.ktb_community.post.entity.PostStatus;
 import com.ktb.ktb_community.post.mapper.PostFileMapper;
 import com.ktb.ktb_community.post.mapper.PostMapper;
 import com.ktb.ktb_community.post.repository.PostFileRepository;
+import com.ktb.ktb_community.post.repository.PostLikeRepository;
 import com.ktb.ktb_community.post.repository.PostRepository;
 import com.ktb.ktb_community.post.repository.PostStatusRepository;
 import com.ktb.ktb_community.user.entity.User;
 import com.ktb.ktb_community.user.repository.UserRepository;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +42,10 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostStatusRepository postStatusRepository;
+    private final PostLikeRepository postLikeRepository;
     private final PostFileRepository postFileRepository;
     private final PostMapper postMapper;
     private final PostFileMapper postFileMapper;
-    private final FileService fileService;
 
     // post 목록 조회
     @Transactional(readOnly = true)
@@ -90,8 +86,10 @@ public class PostService {
         List<PostFile> postFiles = postFileRepository.findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(postId);
         // postFile Entity -> dto
         List<PostFileResponse> fileResponses = postFileMapper.toPostFileResponseList(postFiles);
+        // 좋아요 여부 확인
+        boolean isLiked = userId != null && postLikeRepository.existsByPostIdAndUserId(postId, userId);
         // 응답 dto
-        PostDetailResponse response = postMapper.toPostDetailResponse(post, fileResponses, userId);
+        PostDetailResponse response = postMapper.toPostDetailResponse(post, fileResponses, userId, isLiked);
 
         return response;
     }
@@ -124,7 +122,8 @@ public class PostService {
         }
         // 저장된 게시물 반환
         // Entity -> DTO
-        PostDetailResponse response = postMapper.toPostDetailResponse(savedPost, savedPostFileList, userId);
+        boolean isLiked = false; // 새로 생성한 게시글 -> 좋아요 전
+        PostDetailResponse response = postMapper.toPostDetailResponse(savedPost, savedPostFileList, userId, isLiked);
 
         return response;
     }
@@ -156,8 +155,10 @@ public class PostService {
                 .findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(postId);
         List<PostFileResponse> savedPostFileResponseList = postFileMapper
                 .toPostFileResponseList(savedPostFileList);
+        // 좋아요 여부 확인
+        boolean isLiked = postLikeRepository.existsByPostIdAndUserId(postId, userId);
         // 업데이트한 게시글 상세조회 데이터 조회
-        PostDetailResponse response = postMapper.toPostDetailResponse(post, savedPostFileResponseList, userId);
+        PostDetailResponse response = postMapper.toPostDetailResponse(post, savedPostFileResponseList, userId, isLiked);
 
         return response;
     }
@@ -200,7 +201,7 @@ public class PostService {
                 .findByPostIdAndDeletedAtIsNullOrderByImageIndexAsc(post.getId());
 
         Map<String, PostFile> fileMap = existingFiles.stream()
-                .collect(Collectors.toMap(PostFile::getUrl, f -> f));
+                .collect(Collectors.toMap(PostFile::getFileKey, f -> f));
 
         log.info("=== 파일 업데이트 시작 ===");
         log.info("기존 파일 개수: {}", existingFiles.size());
@@ -210,15 +211,15 @@ public class PostService {
         fileMap.forEach((key, value) -> log.info("  - {}: ID={}", key, value.getId()));
 
         // 삭제 체크
-        Set<String> requestedUrls = postFiles.stream()
-                .map(f -> extractFileUrl(f.fileUrl()))
+        Set<String> requestedFileKeys = postFiles.stream()
+                .map(f -> extractFileKey(f.s3Url()))
                 .collect(Collectors.toSet());
 
         for(PostFile existingFile : existingFiles) {
-            if(!requestedUrls.contains(existingFile.getUrl())) {
-                log.info("삭제할 파일: {}", existingFile.getUrl());
+            if(!requestedFileKeys.contains(existingFile.getFileKey())) {
+                log.info("삭제할 파일: {}", existingFile.getFileKey());
                 existingFile.changeToDeleted();
-                fileMap.remove(existingFile.getUrl());  // Map에서도 제거
+                fileMap.remove(existingFile.getFileKey());  // Map에서도 제거
             }
         }
 
@@ -229,10 +230,10 @@ public class PostService {
         for(int i = 0; i < postFiles.size(); i++) {
             PostFileRequest file = postFiles.get(i);
 
-            String originalUrl = extractFileUrl(file.fileUrl());
-            log.info("처리 중 - 파일 {}: {}", i+1, originalUrl);
+            String fileKey = extractFileKey(file.s3Url());
+            log.info("처리 중 - 파일 {}: {}", i+1, fileKey);
 
-            PostFile existingFile = fileMap.get(originalUrl);  // ← Map에서 직접 조회
+            PostFile existingFile = fileMap.get(fileKey);  // ← Map에서 직접 조회
 
             log.info("Map에서 찾은 파일: {}", existingFile != null ? existingFile.getId() : "null");
 
@@ -240,12 +241,13 @@ public class PostService {
                 log.info("기존 파일 - 순서 업데이트: {} -> {}", existingFile.getImageIndex(), i+1);
                 existingFile.updateIndex(i+1);
             } else {
-                log.info("새 파일 - 저장 시도: {}", originalUrl);
+                log.info("새 파일 - 저장 시도: {}", fileKey);
 
                 PostFileRequest newFileRequest = new PostFileRequest(
                         file.fileName(),
                         i + 1,
-                        originalUrl,
+                        file.fileKey(),
+                        file.s3Url(),
                         file.contentType()
                 );
                 PostFile newFile = postFileMapper.toEntity(newFileRequest, post);
@@ -254,54 +256,34 @@ public class PostService {
         }
     }
 
-    private String extractFileUrl(String fileUrl) {
-        if(fileUrl == null || fileUrl.isEmpty()) {
+    private String extractFileKey(String s3Url) {
+        if(s3Url == null || s3Url.isEmpty()) {
             return null;
         }
 
-        if(!fileUrl.startsWith("http")) {
-            return fileUrl;
+        // 이미 fileKey만 있는 경우
+        if(!s3Url.startsWith("http")) {
+            return s3Url;
         }
 
-        String path = fileUrl.split("\\?")[0];
-        String originalUrl = path.substring(path.lastIndexOf("/") + 1);
-
-        log.info("extractFileUrl - 입력: {}", fileUrl);
-        log.info("extractFileUrl - 출력: {}", originalUrl);
-        log.info("extractFileUrl - 출력 해시코드: {}", originalUrl.hashCode());
-
-        return originalUrl;
-    }
-
-    // 게시글 파일 조회
-    @Transactional(readOnly = true)
-    public Resource getPostFile(String fileName, String token) {
-        log.info("getPostFile - fileName: {}", fileName);
-
-        // 파일 존재 여부 및 권한 확인
-        PostFile postFile = postFileRepository.findByUrl(fileName)
-                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
-
-        // 논리 삭제 확인
-        if (postFile.getDeletedAt() != null) {
-            throw new CustomException(ErrorCode.FILE_NOT_FOUND);
+        // S3 또는 CloudFront URL에서 fileKey 추출
+        // 예: https://cloudfront.domain/path/to/file.jpg -> path/to/file.jpg
+        try {
+            String path = s3Url.split("\\?")[0]; // 쿼리 파라미터 제거
+            int domainEndIndex = path.indexOf("/", 8); // "https://" 이후 첫 번째 /
+            if (domainEndIndex != -1) {
+                String fileKey = path.substring(domainEndIndex + 1);
+                log.info("extractFileKey - 입력: {}", s3Url);
+                log.info("extractFileKey - 출력: {}", fileKey);
+                return fileKey;
+            }
+        } catch (Exception e) {
+            log.error("extractFileKey 실패: {}", s3Url, e);
         }
 
-        // 파일 조회
-        return fileService.getFileWithToken(fileName, token);
+        return s3Url;
     }
 
-    // 게시글 파일 ContentType 조회
-    @Transactional(readOnly = true)
-    public String getPostFileContentType(String fileName) {
-        PostFile postFile = postFileRepository.findByUrl(fileName)
-                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
-
-        String contentType = postFile.getContentType();
-        if (contentType == null || contentType.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_FILE);
-        }
-
-        return contentType;
-    }
+    // 게시글 파일 조회 - S3/CloudFront 사용으로 더 이상 필요 없음
+    // Mapper에서 URL을 직접 반환하므로 이 메서드는 제거 예정
 }

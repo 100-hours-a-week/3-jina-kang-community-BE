@@ -2,7 +2,6 @@ package com.ktb.ktb_community.post.controller;
 
 import com.ktb.ktb_community.global.common.dto.ApiResponse;
 import com.ktb.ktb_community.global.common.dto.CursorResponse;
-import com.ktb.ktb_community.global.file.service.FileService;
 import com.ktb.ktb_community.post.dto.request.PostCreateRequest;
 import com.ktb.ktb_community.post.dto.request.PostUpdateRequest;
 import com.ktb.ktb_community.post.dto.response.PostDetailResponse;
@@ -10,13 +9,10 @@ import com.ktb.ktb_community.post.dto.response.PostListResponse;
 import com.ktb.ktb_community.post.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -25,10 +21,6 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final FileService fileService;
-
-    @Value("${file.upload.path}")
-    private String uploadPath;
 
     /*
     Todo

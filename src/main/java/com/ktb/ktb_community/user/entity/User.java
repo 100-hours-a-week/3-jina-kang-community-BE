@@ -23,7 +23,7 @@ public class User {
     @Column(unique = true, nullable = false, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 100)
     private String password;
 
     @Column(unique = true, nullable = false, length = 20)
@@ -36,6 +36,9 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_image_id", nullable = false)
     private ProfileImage profileImage;
+
+    @Column(name = "refresh_token", nullable = true, length = 500)
+    private String refreshToken;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -55,5 +58,13 @@ public class User {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void deleteRefreshToken() {
+        this.refreshToken = null;
+    }
+
+    public void  updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }

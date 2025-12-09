@@ -1,6 +1,5 @@
 package com.ktb.ktb_community.post.entity;
 
-import com.ktb.ktb_community.global.file.entity.FileType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -30,8 +29,11 @@ public class PostFile {
     @Column(name = "file_name", nullable = false)
     private String fileName;        // 원본 파일 이름
 
-    @Column(nullable = false)
-    private String url;             // 저장된 파일명
+    @Column(name = "file_key", nullable = false, length = 500)
+    private String fileKey;         // S3 파일 키
+
+    @Column(nullable = false, length = 500)
+    private String url;             // CloudFront URL
 
     @Column(name = "image_index", nullable = false)
     private int imageIndex = 1;     // 파일 저장 순서

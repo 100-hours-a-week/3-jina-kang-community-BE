@@ -1,0 +1,45 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Build outputs
+build/
+target/
+out/
+*.jar
+*.war
+*.class
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Environment files
+.env
+.env.*
+application-local.yml
+application-dev.yml
+
+# Logs
+*.log
+logs/
+
+# Test files
+src/test/
+
+# Documentation
+README.md
+docs/
+
+# CI/CD
+.github/
