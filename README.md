@@ -13,7 +13,7 @@
 ## API 명세서
 
 ## 시스템 아키텍처
-<img width="800" height="918" alt="Image" src="https://github.c그래서om/user-attachments/assets/5364effd-353b-4ceb-bce4-f5a796d56076" />
+<img width="800" height="918" alt="Image" src="https://github.com/user-attachments/assets/f7cc1fc9-cf72-4d63-aa8c-178bdba2a5f8" />
 
 ## 레포지토리 구조
 <img width="387" height="815" alt="Image" src="https://github.com/user-attachments/assets/3e0de223-987d-4332-a1d1-cf9ee613483d" />
